@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-ring: var(--primary);
+}
+
+:root {
+  /*
+    Intended light palette reference:
+    --background: #F5F1EA;
+    --foreground: #1A1B1E;
+    --muted-foreground: #6B6E73;
+    --primary: #E8590C;
+    --accent: #3B5BDB;
+    --border: #E0D9CC;
+
+    Retired dark-mode token values:
+    --background: #0B0D10;
+    --surface: #16191D;
+    --surface-2: #1D2125;
+    --foreground: #E8E6E1;
+    --muted-foreground: #7A7D82;
+    --primary: #FF6B35;
+    --primary-foreground: #0B0D10;
+    --accent: #5B7FFF;
+    --border: #2A2E33;
+  */
+
+  --background: #FBF3E8;
+  --surface: #FFFFFF;
+  --surface-2: #F2ECE2;
+  --foreground: #111214;
+  --muted-foreground: #4F5961;
+  --primary: #FF4F0A;
+  --primary-foreground: #FFFFFF;
+  --accent: #5A7BFF;
+  --border: #DECDB6;
+
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: var(--background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
