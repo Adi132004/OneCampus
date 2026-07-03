@@ -1,0 +1,11 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@import "./styles/variables.css";
+@import "./styles/globals.css";
+@import "./styles/utilities.css";
+@import "./styles/animations.css";
+@import "./styles/scrollbar.css";
+
+@custom-variant dark (&:is(.dark *));

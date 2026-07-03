@@ -1,0 +1,82 @@
+/* Premium motion library. Keep timings in 300ms - 700ms range. */
+@layer utilities {
+  .motion-fade-up   { animation: fade-up 0.60s cubic-bezier(0.2, 0.75, 0.18, 1) both; }
+  .motion-fade-in   { animation: fade-in 0.50s ease-out both; }
+  .motion-scale-in  { animation: scale-in 0.45s cubic-bezier(0.2, 0.75, 0.18, 1) both; }
+  .motion-slide-in  { animation: slide-in 0.60s cubic-bezier(0.2, 0.75, 0.18, 1) both; }
+  .motion-blur-in   { animation: blur-in 0.70s ease-out both; }
+  .motion-reveal    { animation: page-reveal 0.55s ease-out both; }
+  .motion-float     { animation: float-soft 7s ease-in-out infinite; }
+
+  .motion-delay-1 { animation-delay: 0.08s; }
+  .motion-delay-2 { animation-delay: 0.16s; }
+  .motion-delay-3 { animation-delay: 0.24s; }
+  .motion-delay-4 { animation-delay: 0.32s; }
+  .motion-delay-5 { animation-delay: 0.40s; }
+
+  .hover-lift {
+    transition:
+      transform 350ms cubic-bezier(0.2, 0.75, 0.18, 1),
+      box-shadow 350ms cubic-bezier(0.2, 0.75, 0.18, 1);
+    will-change: transform;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 30px 90px rgba(36, 24, 12, 0.14);
+  }
+
+  .hover-button {
+    transition:
+      transform 300ms cubic-bezier(0.2, 0.75, 0.18, 1),
+      box-shadow 300ms cubic-bezier(0.2, 0.75, 0.18, 1);
+  }
+  .hover-button:hover { transform: translateY(-2px); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes blur-in {
+  from { opacity: 0; filter: blur(14px); transform: translateY(12px); }
+  to   { opacity: 1; filter: blur(0);   transform: translateY(0); }
+}
+@keyframes page-reveal {
+  from { opacity: 0; transform: translateY(10px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+@keyframes float-soft {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50%      { transform: translate3d(0, -12px, 0) rotate(1deg); }
+}
+
+/* Background blob drift used by the premium ScrollGradient. */
+@keyframes blob-drift-a {
+  0%, 100% { transform: translate3d(-6vw, -4vh, 0) scale(1); }
+  50%      { transform: translate3d(6vw, 4vh, 0) scale(1.05); }
+}
+@keyframes blob-drift-b {
+  0%, 100% { transform: translate3d(6vw, 4vh, 0) scale(1.05); }
+  50%      { transform: translate3d(-6vw, -4vh, 0) scale(1); }
+}
