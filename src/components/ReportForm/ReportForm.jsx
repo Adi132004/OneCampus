@@ -1,77 +1,129 @@
-import { useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { PageShell } from "../PageShell";
+import { addLostItem } from "@/lib/mock-data";
+import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
+
 export function ReportForm({ kind, onDone }) {
-  const [previews, setPreviews] = useState([]);
-  function onFiles(files) {
-    if (!files) return;
-    const urls = Array.from(files)
-      .slice(0, 4)
-      .map((f) => URL.createObjectURL(f));
-    setPreviews((p) => [...p, ...urls].slice(0, 4));
+  const nav = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    location: "",
+    date: "",
+    contact: "",
+  });
+  const [error, setError] = useState("");
+  const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
+
+  useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      nav({ to: "/login" });
+    }
+  }, [isSignedIn, nav]);
+
+  function handleChange(event) {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (error) setError("");
   }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!isSignedIn) {
+      setError("Please sign in before submitting a lost or found report.");
+      return;
+    }
+
+    if (!formData.name.trim() || !formData.description.trim() || !formData.location.trim() || !formData.date || !formData.contact.trim()) {
+      setError("Please fill in every field so the report is useful.");
+      return;
+    }
+
+    const currentUser = getCurrentAuthUser();
+    const newItem = {
+      id: `${kind}-${Date.now()}`,
+      name: formData.name.trim(),
+      emoji: kind === "lost" ? "🧳" : "✅",
+      image: "",
+      description: formData.description.trim(),
+      location: formData.location.trim(),
+      date: formData.date,
+      contact: formData.contact.trim(),
+      college: "Your campus",
+      status: kind === "lost" ? "Lost" : "Found",
+      owner: currentUser
+        ? {
+            uid: currentUser.uid,
+            email: currentUser.email,
+            displayName: currentUser.displayName,
+          }
+        : null,
+    };
+
+    addLostItem(newItem);
+    onDone?.(newItem);
+  }
+
   const label = kind === "lost" ? "Lost Item" : "Found Item";
+
+  if (!isSignedIn) {
+    return null;
+  }
+
   return (
     <PageShell
       eyebrow="Lost & Found"
       title={`Report a ${kind} item`}
       subtitle="Add as much detail as possible — it helps others identify it."
     >
-      <form
-        className="grid gap-6 lg:grid-cols-[1.2fr_1fr]"
-        onSubmit={(e) => {
-          e.preventDefault();
-          onDone();
-        }}
-      >
+      <form className="grid gap-6 lg:grid-cols-[1.2fr_1fr]" onSubmit={handleSubmit}>
         <div className="rounded-3xl border border-border bg-card p-6">
-          <div className="text-sm font-medium text-foreground">Item photos</div>
+          <div className="text-sm font-medium text-foreground">Item details</div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Clear photos help others recognize the item.
+            No image is required. If none is provided, a simple placeholder will be shown.
           </p>
-          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
-            {previews.map((src, i) => (
-              <div
-                key={i}
-                className="relative aspect-square overflow-hidden rounded-2xl border border-border bg-[var(--surface-2)]"
-              >
-                <img src={src} alt="" className="h-full w-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => setPreviews((p) => p.filter((_, j) => j !== i))}
-                  className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-card/90"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-            {previews.length < 4 && (
-              <label className="grid aspect-square cursor-pointer place-items-center rounded-2xl border border-dashed border-border bg-[var(--surface-2)] text-muted-foreground hover:bg-muted">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => onFiles(e.target.files)}
-                />
-                <div className="flex flex-col items-center gap-1 text-xs">
-                  <ImagePlus className="h-5 w-5" /> Upload
-                </div>
-              </label>
-            )}
+          <div className="mt-5 rounded-3xl border border-dashed border-border bg-[var(--surface-2)] p-6 text-center text-sm text-muted-foreground">
+            Add the item details and we’ll list it without needing a photo.
           </div>
         </div>
 
         <div className="rounded-3xl border border-border bg-card p-6">
           <div className="grid gap-4">
-            <Field label={`${label} name`} placeholder="e.g. Black backpack" />
-            <Field label="Description" textarea placeholder="Color, brand, distinguishing marks…" />
+            {error ? <p className="text-sm text-red-600">{error}</p> : null}
+            <Field
+              label={`${label} name`}
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="e.g. Black backpack"
+            />
+            <Field
+              label="Description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              textarea
+              placeholder="Color, brand, distinguishing marks…"
+            />
             <Field
               label={kind === "lost" ? "Last seen location" : "Found location"}
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
               placeholder="e.g. Central Library, 2nd floor"
             />
-            <Field label="Date" type="date" />
-            <Field label="Contact details" placeholder="Phone or email" />
+            <Field label="Date" name="date" value={formData.date} onChange={handleChange} type="date" />
+            <Field
+              label="Contact details"
+              name="contact"
+              value={formData.contact}
+              onChange={handleChange}
+              placeholder="Phone or email"
+            />
             <button
               type="submit"
               className="mt-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90"
@@ -87,17 +139,28 @@ export function ReportForm({ kind, onDone }) {
     </PageShell>
   );
 }
-function Field({ label, type = "text", placeholder, textarea = false }) {
+
+function Field({ label, type = "text", placeholder, textarea = false, name, value, onChange }) {
   const cls =
     "w-full rounded-2xl border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30";
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
       {textarea ? (
-        <textarea rows={3} placeholder={placeholder} className={cls} />
+        <textarea
+          rows={3}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={cls}
+        />
       ) : (
         <input
           type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
           placeholder={placeholder}
           className={cls.replace("rounded-2xl", "rounded-full")}
         />

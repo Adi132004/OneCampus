@@ -1,16 +1,80 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Edit3, Plus, Search, Trash2, X } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
-import { SmartImage } from "@/components/SmartImage";
-import { LOST_ITEMS } from "@/lib/mock-data";
+import { deleteLostItem, formatLostItemDate, getLostItems, updateLostItem } from "@/lib/mock-data";
+import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
 
 export function LostFoundPage() {
   const [tab, setTab] = useState("All");
   const [q, setQ] = useState("");
-  const items = LOST_ITEMS.filter(
-    (i) => (tab === "All" || i.status === tab) && i.name.toLowerCase().includes(q.toLowerCase()),
-  );
+  const [items, setItems] = useState(() => getLostItems());
+  const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
+  const [editingItem, setEditingItem] = useState(null);
+  const [draft, setDraft] = useState({ name: "", description: "", location: "", date: "", contact: "" });
+
+  useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
+
+  const currentUser = getCurrentAuthUser();
+  const currentUserKey = currentUser?.uid || currentUser?.email || null;
+
+  const visibleItems = useMemo(() => {
+    const filtered = items.filter(
+      (i) => (tab === "All" || i.status === tab) && i.name.toLowerCase().includes(q.toLowerCase()),
+    );
+
+    return filtered.sort((a, b) => {
+      const aDate = new Date(a.date || 0).getTime();
+      const bDate = new Date(b.date || 0).getTime();
+      return bDate - aDate;
+    });
+  }, [items, q, tab]);
+
+  function handleDelete(itemId) {
+    deleteLostItem(itemId);
+    setItems(getLostItems());
+  }
+
+  function startEdit(item) {
+    setEditingItem(item);
+    setDraft({
+      name: item.name || "",
+      description: item.description || "",
+      location: item.location || "",
+      date: item.date || "",
+      contact: item.contact || "",
+    });
+  }
+
+  function cancelEdit() {
+    setEditingItem(null);
+    setDraft({ name: "", description: "", location: "", date: "", contact: "" });
+  }
+
+  function saveEdit(event) {
+    event.preventDefault();
+    if (!editingItem) return;
+
+    const nextItem = {
+      ...editingItem,
+      name: draft.name.trim() || editingItem.name,
+      description: draft.description.trim() || editingItem.description,
+      location: draft.location.trim() || editingItem.location,
+      date: draft.date || editingItem.date,
+      contact: draft.contact.trim() || editingItem.contact,
+    };
+
+    updateLostItem(nextItem);
+    setItems(getLostItems());
+    cancelEdit();
+  }
+
+  function canManage(item) {
+    if (!currentUserKey) return false;
+    const owner = item.owner || {};
+    return owner.uid === currentUserKey || owner.email === currentUserKey || owner.displayName === currentUserKey;
+  }
+
   return (
     <PageShell
       eyebrow="Lost & Found"
@@ -28,13 +92,13 @@ export function LostFoundPage() {
           />
         </div>
         <Link
-          to="/lost-found/report-lost"
+          to={isSignedIn ? "/lost-found/report-lost" : "/login"}
           className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
         >
           <Plus className="h-4 w-4" /> Report Lost
         </Link>
         <Link
-          to="/lost-found/report-found"
+          to={isSignedIn ? "/lost-found/report-found" : "/login"}
           className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
           style={{
             boxShadow: "0 6px 16px rgba(232,89,12,0.25)",
@@ -57,21 +121,30 @@ export function LostFoundPage() {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((i) => (
-          <div
-            key={i.id}
-            className="group overflow-hidden rounded-3xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-            style={{
-              boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
-            }}
-          >
-            <div className="relative aspect-[4/3] overflow-hidden bg-[var(--surface-2)]">
-              <SmartImage
-                src={i.image}
-                fallbackSeed={`lf-${i.id}`}
-                alt={i.name}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+        {visibleItems.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground sm:col-span-2 lg:col-span-3">
+            No items match that search yet. Try a broader keyword or report a new item.
+          </div>
+        ) : (
+          visibleItems.map((i) => (
+            <div
+              key={i.id}
+              className="group overflow-hidden rounded-3xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              style={{
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+              }}
+            >
+            <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[linear-gradient(135deg,rgba(232,89,12,0.14),rgba(15,23,42,0.06))]">
+              {i.image ? (
+                <img src={i.image} alt={i.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="text-center">
+                  <div className="text-4xl">{i.emoji || "🧾"}</div>
+                  <div className="mt-2 text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+                    No image added
+                  </div>
+                </div>
+              )}
             </div>
             <div className="p-5">
               <div className="flex items-start justify-between gap-2">
@@ -85,13 +158,96 @@ export function LostFoundPage() {
               <p className="mt-1 text-xs text-muted-foreground">{i.description}</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] text-muted-foreground font-mono uppercase tracking-wider">
                 <span>📍 {i.location}</span>
-                <span>📅 {i.date}</span>
+                <span>📅 {formatLostItemDate(i.date)}</span>
                 <span>🎓 {i.college}</span>
-                <span>{i.department}</span>
+                <span>{i.contact ? `📞 ${i.contact}` : "Open"}</span>
               </div>
+              {canManage(i) ? (
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => startEdit(i)}
+                    className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(i.id)}
+                    className="inline-flex items-center gap-1 rounded-full border border-destructive/20 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
-        ))}
+          ))
+        )}
+      {editingItem ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-xl rounded-3xl border border-border bg-card p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground">Edit report</h3>
+              <button type="button" onClick={cancelEdit} className="rounded-full p-2 text-muted-foreground hover:bg-muted">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <form onSubmit={saveEdit} className="grid gap-4">
+              <label className="block text-sm font-medium text-foreground">
+                <span className="mb-1.5 block">Item name</span>
+                <input
+                  value={draft.name}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))}
+                  className="w-full rounded-full border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block text-sm font-medium text-foreground">
+                <span className="mb-1.5 block">Description</span>
+                <textarea
+                  rows={3}
+                  value={draft.description}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
+                  className="w-full rounded-2xl border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block text-sm font-medium text-foreground">
+                <span className="mb-1.5 block">Location</span>
+                <input
+                  value={draft.location}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, location: event.target.value }))}
+                  className="w-full rounded-full border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block text-sm font-medium text-foreground">
+                <span className="mb-1.5 block">Date</span>
+                <input
+                  type="date"
+                  value={draft.date}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, date: event.target.value }))}
+                  className="w-full rounded-full border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block text-sm font-medium text-foreground">
+                <span className="mb-1.5 block">Contact</span>
+                <input
+                  value={draft.contact}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, contact: event.target.value }))}
+                  className="w-full rounded-full border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm"
+                />
+              </label>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={cancelEdit} className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground">
+                  Cancel
+                </button>
+                <button type="submit" className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+                  Save changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
       </div>
     </PageShell>
   );

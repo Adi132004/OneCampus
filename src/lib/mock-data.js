@@ -7,7 +7,6 @@ export const PRODUCTS = [
     condition: "Like new",
     seller: "Aarav S.",
     college: "IIT Bombay",
-    department: "Computer Science",
     postedAt: "2h ago",
     emoji: "📘",
     image:
@@ -23,7 +22,6 @@ export const PRODUCTS = [
     condition: "Good",
     seller: "Meera K.",
     college: "Delhi University",
-    department: "Electronics",
     postedAt: "5h ago",
     emoji: "🧮",
     image:
@@ -38,7 +36,6 @@ export const PRODUCTS = [
     condition: "Used",
     seller: "Rohan P.",
     college: "BITS Pilani",
-    department: "Mechanical",
     postedAt: "1d ago",
     emoji: "🚲",
     image:
@@ -54,7 +51,6 @@ export const PRODUCTS = [
     condition: "Like new",
     seller: "Priya N.",
     college: "VIT Vellore",
-    department: "Design",
     postedAt: "3h ago",
     emoji: "💡",
     image:
@@ -69,7 +65,6 @@ export const PRODUCTS = [
     condition: "Good",
     seller: "Ishaan T.",
     college: "NIT Trichy",
-    department: "Electronics",
     postedAt: "8h ago",
     emoji: "🎧",
     image:
@@ -85,7 +80,6 @@ export const PRODUCTS = [
     condition: "Used",
     seller: "Sara L.",
     college: "IIT Delhi",
-    department: "Chemical",
     postedAt: "2d ago",
     emoji: "🧊",
     image:
@@ -100,7 +94,6 @@ export const PRODUCTS = [
     condition: "Good",
     seller: "Kabir M.",
     college: "BITS Pilani",
-    department: "Business",
     postedAt: "6h ago",
     emoji: "🎸",
     image:
@@ -115,7 +108,6 @@ export const PRODUCTS = [
     condition: "New",
     seller: "Anaya R.",
     college: "IIT Bombay",
-    department: "Chemical",
     postedAt: "12h ago",
     emoji: "🥼",
     image:
@@ -133,86 +125,77 @@ export const CATEGORIES = [
   "Music",
   "Clothing",
 ];
-export const LOST_ITEMS = [
-  {
-    id: "l1",
-    name: "Black Backpack",
-    emoji: "🎒",
-    image:
-      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80",
-    description: "Wildcraft, has a laptop sleeve and a Rubik's cube keychain.",
-    location: "Central Library, 2nd floor",
-    date: "Today",
-    college: "IIT Bombay",
-    department: "Computer Science",
-    status: "Lost",
-  },
-  {
-    id: "l2",
-    name: "AirPods Pro",
-    emoji: "🎧",
-    image:
-      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=800&auto=format&fit=crop&q=80",
-    description: "White case, small scratch on the lid.",
-    location: "Cafeteria block B",
-    date: "Yesterday",
-    college: "Delhi University",
-    department: "Business",
-    status: "Lost",
-  },
-  {
-    id: "l3",
-    name: "Spectacles",
-    emoji: "👓",
-    image:
-      "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=800&auto=format&fit=crop&q=80",
-    description: "Round black frame, found near the sports complex.",
-    location: "Sports Complex",
-    date: "2 days ago",
-    college: "BITS Pilani",
-    department: "Mechanical",
-    status: "Found",
-  },
-  {
-    id: "l4",
-    name: "Student ID Card",
-    emoji: "🪪",
-    image:
-      "https://images.unsplash.com/photo-1606159068539-43f36b99d1b2?w=800&auto=format&fit=crop&q=80",
-    description: "Belongs to Ravi K., 3rd year.",
-    location: "Hostel C lobby",
-    date: "3 days ago",
-    college: "VIT Vellore",
-    department: "Electronics",
-    status: "Found",
-  },
-  {
-    id: "l5",
-    name: "Water Bottle",
-    emoji: "🧴",
-    image:
-      "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&auto=format&fit=crop&q=80",
-    description: "Blue Milton, name 'Sara' written on cap.",
-    location: "Lecture Hall 4",
-    date: "Today",
-    college: "NIT Trichy",
-    department: "Civil",
-    status: "Lost",
-  },
-  {
-    id: "l6",
-    name: "Calculator",
-    emoji: "🧮",
-    image:
-      "https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=800&auto=format&fit=crop&q=80",
-    description: "Casio fx-991, sticker of a panda on the back.",
-    location: "Exam Hall 2",
-    date: "1 week ago",
-    college: "IIT Delhi",
-    department: "Electronics",
-    status: "Found",
-  },
-];
+const CUSTOM_LOST_ITEMS_KEY = "onecampus-custom-lost-items";
+
+export const LOST_ITEMS = [];
+
+export function formatLostItemDate(value) {
+  if (!value) return "Unknown date";
+
+  const text = String(value).trim();
+  if (text === "Today" || text === "Yesterday") return text;
+  if (/^\d+\s+days?\s+ago$/i.test(text)) return text;
+  if (/^\d+\s+weeks?\s+ago$/i.test(text)) return text;
+
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return text;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(parsed);
+  target.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round((today - target) / 86_400_000);
+
+  if (diffDays <= 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+
+  return parsed.toLocaleDateString("en", { month: "short", day: "numeric" });
+}
+
+function readCustomLostItems() {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_LOST_ITEMS_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function getLostItems() {
+  return [...LOST_ITEMS, ...readCustomLostItems()];
+}
+
+export function addLostItem(item) {
+  if (typeof window === "undefined") return getLostItems();
+
+  const nextItems = [item, ...readCustomLostItems()];
+  window.localStorage.setItem(CUSTOM_LOST_ITEMS_KEY, JSON.stringify(nextItems));
+  return getLostItems();
+}
+
+export function updateLostItem(updatedItem) {
+  if (typeof window === "undefined") return getLostItems();
+
+  const nextItems = readCustomLostItems().map((item) => (item.id === updatedItem.id ? updatedItem : item));
+  window.localStorage.setItem(CUSTOM_LOST_ITEMS_KEY, JSON.stringify(nextItems));
+  return getLostItems();
+}
+
+export function deleteLostItem(id) {
+  if (typeof window === "undefined") return getLostItems();
+
+  const nextItems = readCustomLostItems().filter((item) => item.id !== id);
+  window.localStorage.setItem(CUSTOM_LOST_ITEMS_KEY, JSON.stringify(nextItems));
+  return getLostItems();
+}
+
 export const TEAM = [
   {
     name: "Prathmesh Palkurtiwar",
