@@ -81,8 +81,8 @@ export function LostFoundPage() {
       title="Reunite items with their owners"
       subtitle="Browse recent reports or post your own."
     >
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[240px]">
+      <div className="mb-6 flex flex-wrap items-center gap-3 md:flex-nowrap md:items-center md:justify-between">
+        <div className="relative flex-1 min-w-[240px] md:mr-6">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={q}
@@ -91,21 +91,23 @@ export function LostFoundPage() {
             className="w-full rounded-full border border-border bg-card py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
-        <Link
-          to={isSignedIn ? "/lost-found/report-lost" : "/login"}
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
-        >
-          <Plus className="h-4 w-4" /> Report Lost
-        </Link>
-        <Link
-          to={isSignedIn ? "/lost-found/report-found" : "/login"}
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
-          style={{
-            boxShadow: "0 6px 16px rgba(232,89,12,0.25)",
-          }}
-        >
-          <Plus className="h-4 w-4" /> Report Found
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            to={isSignedIn ? "/lost-found/report-lost" : `/login?next=${encodeURIComponent("/lost-found/report-lost")}`}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+          >
+            <Plus className="h-4 w-4" /> Report Lost
+          </Link>
+          <Link
+            to={isSignedIn ? "/lost-found/report-found" : `/login?next=${encodeURIComponent("/lost-found/report-found")}`}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+            style={{
+              boxShadow: "0 6px 16px rgba(232,89,12,0.25)",
+            }}
+          >
+            <Plus className="h-4 w-4" /> Report Found
+          </Link>
+        </div>
       </div>
 
       <div className="mb-8 flex gap-2">

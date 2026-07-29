@@ -35,7 +35,12 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   return (
-<header className="sticky top-0 z-40 flex justify-center px-4 pt-2 md:pt-3">     
+<header className="sticky top-0 z-40 flex justify-center px-4 pt-2 md:pt-3">
+      <style>{`@media (min-width: 1024px){
+        nav ul li a.nav-active{position:relative;display:inline-block}
+        /* use a fixed underline width so it appears consistent across items */
+        nav ul li a.nav-active::after{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:-10px;width:40px;height:4px;background:rgba(255,122,0,1);border-radius:9999px}
+      }`}</style>
    <nav
        className={`flex h-16 w-full max-w-7xl items-center justify-between gap-6 rounded-full px-6 transition-all duration-500 md:h-[68px] md:px-8 ${scrolled ? "border border-white/70 bg-white/70 shadow-[0_18px_58px_rgba(32,24,16,0.12)] backdrop-blur-2xl" : "border border-white/60 bg-white/78 shadow-[0_18px_48px_rgba(32,24,16,0.10)] backdrop-blur-xl"}`}
       >
@@ -52,7 +57,7 @@ export function Navbar() {
                 to={l.to}
                 className="transition-colors duration-300 hover:text-foreground"
                 activeProps={{
-                  className: "text-foreground font-medium",
+                  className: "text-foreground font-medium nav-active",
                 }}
                 activeOptions={{
                   exact: l.to === "/",

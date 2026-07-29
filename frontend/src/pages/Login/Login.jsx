@@ -1,9 +1,29 @@
 import { Link } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
+import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
 
 export function LoginPage() {
-  
+  useEffect(() => {
+    // If already signed in, redirect to next or home.
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next");
+
+    const stored = getCurrentAuthUser();
+    if (stored) {
+      window.location.href = next || "/";
+      return;
+    }
+
+    const unsub = subscribeToAuth((user) => {
+      if (user) {
+        window.location.href = next || "/";
+      }
+    });
+
+    return () => unsub && unsub();
+  }, []);
   return (
     <div className="relative min-h-screen">
       <Navbar />
