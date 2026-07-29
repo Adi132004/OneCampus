@@ -59,7 +59,7 @@ export function MarketplaceItemPage() {
               <div>
                 <div className="text-sm font-medium text-foreground">{p.seller}</div>
                 <div className="text-xs text-muted-foreground">
-                  {p.college} • {p.department}
+                  {p.college}
                 </div>
               </div>
             </div>
