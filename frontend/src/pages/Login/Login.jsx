@@ -1,12 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
-import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
+import { getCurrentAuthUser, loginWithEmailPassword, subscribeToAuth } from "@/lib/firebase";
 
 export function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
-    // If already signed in, redirect to next or home.
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next");
 
@@ -24,6 +28,23 @@ export function LoginPage() {
 
     return () => unsub && unsub();
   }, []);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      await loginWithEmailPassword({ email, password });
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = params.get("next") || "/";
+    } catch (err) {
+      setError(err.message || "Unable to sign in. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="relative min-h-screen">
       <Navbar />
@@ -52,9 +73,21 @@ export function LoginPage() {
 
           
 
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <Field label="Email Login" type="email" placeholder="Enter Email" />
-            <Field label="Password Login" type="password" placeholder="Enter Password" />
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <Field
+              label="Email"
+              type="email"
+              placeholder="Enter Email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+            <Field
+              label="Password"
+              type="password"
+              placeholder="Enter Password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 text-muted-foreground">
                 <input type="checkbox" className="h-4 w-4 rounded border-border accent-primary" />
@@ -64,11 +97,13 @@ export function LoginPage() {
                 Forgot password?
               </a>
             </div>
+            {error ? <p className="text-sm text-red-600">{error}</p> : null}
             <button
               type="submit"
-              className="orange-button mt-2 w-full rounded-full px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:-translate-y-0.5"
+              disabled={isSubmitting}
+              className="orange-button mt-2 w-full rounded-full px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Log in
+              {isSubmitting ? "Signing in..." : "Log in"}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-muted-foreground">
@@ -83,13 +118,15 @@ export function LoginPage() {
     </div>
   );
 }
-function Field({ label, type = "text", placeholder }) {
+function Field({ label, type = "text", placeholder, value, onChange }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
       <input
         type={type}
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         className="w-full rounded-full border border-white/70 bg-white/58 px-4 py-3 text-sm text-foreground placeholder:text-foreground/60 shadow-inner shadow-white/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
       />
     </label>

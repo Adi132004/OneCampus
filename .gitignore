@@ -1,4 +1,6 @@
+# =========================
 # Logs
+# =========================
 logs
 *.log
 npm-debug.log*
@@ -7,6 +9,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# =========================
+# Node / Frontend
+# =========================
 node_modules
 dist
 dist-ssr
@@ -20,22 +25,32 @@ dist-ssr
 .wrangler/
 .dev.vars
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-
 # =========================
 # Spring Boot / Maven
 # =========================
+HELP.md
 target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# =========================
+# Build directories
+# =========================
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# =========================
+# STS
+# =========================
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
 
 # =========================
 # IntelliJ IDEA
@@ -44,16 +59,42 @@ target/
 *.iml
 *.iws
 *.ipr
+out/
 
 # =========================
-# OS
+# NetBeans
 # =========================
-.DS_Store
-Thumbs.db
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
 
 # =========================
-# Secrets / Keys
+# VS Code
 # =========================
+.vscode/*
+!.vscode/extensions.json
+
+# =========================
+# Compiled output
+# =========================
+*.class
+
+# =========================
+# Secrets / Environment
+# =========================
+.env
+.env.local
+application-local.properties
+application-local.yml
+/keys/
 **/Keys/
 *.pem
 *.key
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db

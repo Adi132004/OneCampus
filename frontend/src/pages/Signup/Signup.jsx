@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
+import { registerWithEmailPassword } from "@/lib/firebase";
 
 export function SignupPage() {
   const [form, setForm] = useState({
@@ -11,8 +12,31 @@ export function SignupPage() {
     confirmPassword: "",
     college: "",
   });
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const passwordsMatch = form.password === form.confirmPassword;
   const canSubmit = form.name && form.email && form.password && form.confirmPassword && passwordsMatch;
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      await registerWithEmailPassword({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        campusName: form.college,
+      });
+      window.location.href = "/";
+    } catch (err) {
+      setError(err.message || "Unable to create account. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="relative min-h-screen">
       <Navbar />
@@ -34,7 +58,7 @@ export function SignupPage() {
           <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground">
             Sign up
           </h2>
-          <form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={(e) => e.preventDefault()}>
+          <form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
             <div className="sm:col-span-2">
               <Field
                 label="Full Name"
@@ -83,14 +107,15 @@ export function SignupPage() {
               onChange={(e) => setForm({ ...form, college: e.target.value })}
             />
 
+            {error ? <p className="sm:col-span-2 text-sm text-red-600">{error}</p> : null}
             <button
               type="submit"
-              disabled={!canSubmit}
+              disabled={!canSubmit || isSubmitting}
               className={`orange-button sm:col-span-2 mt-2 w-full rounded-full px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:-translate-y-0.5 ${
-                !canSubmit ? "opacity-50 pointer-events-none" : ""
+                !canSubmit || isSubmitting ? "opacity-50 pointer-events-none" : ""
               }`}
             >
-              Register
+              {isSubmitting ? "Creating account..." : "Register"}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-muted-foreground">

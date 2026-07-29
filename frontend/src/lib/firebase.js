@@ -1,18 +1,7 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const AUTH_STORAGE_KEY = "onecampus-auth-user";
-let app = null;
-let auth = null;
+const ACCESS_TOKEN_STORAGE_KEY = "onecampus-access-token";
+const REFRESH_TOKEN_STORAGE_KEY = "onecampus-refresh-token";
 
 function getStoredAuthUser() {
   if (typeof window === "undefined") return null;
@@ -34,20 +23,31 @@ function storeAuthUser(user) {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
-export function isFirebaseConfigured() {
-  return Boolean(
-    firebaseConfig.apiKey &&
-      firebaseConfig.authDomain &&
-      firebaseConfig.projectId &&
-      firebaseConfig.appId,
-  );
+function storeTokens(tokens) {
+  if (typeof window === "undefined") return;
+  if (tokens?.accessToken) {
+    window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, tokens.accessToken);
+  } else {
+    window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  }
+
+  if (tokens?.refreshToken) {
+    window.localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, tokens.refreshToken);
+  } else {
+    window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  }
 }
 
-export function getFirebaseAuth() {
-  if (!isFirebaseConfigured()) return null;
-  if (!app) app = initializeApp(firebaseConfig);
-  if (!auth) auth = getAuth(app);
-  return auth;
+function clearAuthState() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+}
+
+export function getAccessToken() {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
 }
 
 export function getCurrentAuthUser() {
@@ -55,60 +55,79 @@ export function getCurrentAuthUser() {
 }
 
 export function isSignedIn() {
-  return Boolean(getCurrentAuthUser());
+  return Boolean(getAccessToken());
 }
 
 export function subscribeToAuth(callback) {
   const storedUser = getStoredAuthUser();
   callback(storedUser);
+  return () => {};
+}
 
-  const firebaseAuth = getFirebaseAuth();
-  if (!firebaseAuth) return () => {};
-
-  return firebaseAuth.onAuthStateChanged((user) => {
-    if (user) {
-      const profile = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-      };
-      storeAuthUser(profile);
-      callback(profile);
-      return;
-    }
-
-    storeAuthUser(null);
-    callback(null);
+export async function loginWithEmailPassword({ email, password }) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Login failed");
+  }
+
+  const data = await response.json();
+  const profile = {
+    email,
+    accessToken: data.accessToken,
+  };
+
+  storeAuthUser(profile);
+  storeTokens(data);
+  return profile;
+}
+
+export async function registerWithEmailPassword({ name, email, password, campusName }) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name, email, password, campusName }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Registration failed");
+  }
+
+  const data = await response.json();
+  const profile = {
+    email,
+    accessToken: data.accessToken,
+  };
+
+  storeAuthUser(profile);
+  storeTokens(data);
+  return profile;
+}
+
+export function logoutUser() {
+  clearAuthState();
 }
 
 export async function signInWithGoogle() {
-  const firebaseAuth = getFirebaseAuth();
-  if (!firebaseAuth) {
-    const demoUser = {
-      uid: "demo-user",
-      email: "demo@onecampus.com",
-      displayName: "Demo User",
-      photoURL: "",
-    };
-    storeAuthUser(demoUser);
-    return demoUser;
-  }
+  const currentUser = getCurrentAuthUser();
+  if (currentUser) return currentUser;
 
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({
-    prompt: "select_account",
-  });
-
-  const result = await signInWithPopup(firebaseAuth, provider);
-  const user = result.user;
-  const profile = {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    photoURL: user.photoURL,
+  const demoUser = {
+    uid: "demo-user",
+    email: "demo@onecampus.com",
+    displayName: "Demo User",
+    photoURL: "",
   };
-  storeAuthUser(profile);
-  return profile;
+  storeAuthUser(demoUser);
+  return demoUser;
 }
