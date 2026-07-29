@@ -1,7 +1,8 @@
 package com.OneCampus.identity.entity;
 
-import com.OneCampus.identity.entity.Campus;
 import jakarta.persistence.*;
+
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -18,41 +19,31 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @ManyToOne
-    @JoinColumn(name = "campus_id", nullable = false)
-    private Campus campus;
+    @Column(name = "campus_id", nullable = false)
+    private UUID campusId;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
     protected User() {
         // JPA
     }
 
-    public User(String name, String email, String passwordHash, Campus campus) {
+    public User(String name, String email, String passwordHash, UUID campusId) {
         this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;
-        this.campus = campus;
+        this.campusId = campusId;
+        this.createdAt = Instant.now();
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public Campus getCampus() {
-        return campus;
-    }
+    public UUID getId() { return id; }
+    public String getName() { return name; }
+    public String getEmail() { return email; }
+    public String getPasswordHash() { return passwordHash; }
+    public UUID getCampusId() { return campusId; }
+    public Instant getCreatedAt() { return createdAt; }
 }

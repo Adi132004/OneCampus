@@ -9,10 +9,8 @@ public class JwtProperties {
 
     private String privateKey;
     private String publicKey;
-    private long accessTokenTtlMinutes;
-    private long refreshTokenTtlDays;
-
-    // getters and setters — required for @ConfigurationProperties binding
+    private long accessTokenTtlMinutes = 15;
+    private long refreshTokenTtlDays = 7;
 
     public String getPrivateKey() {
         return privateKey;
@@ -44,5 +42,13 @@ public class JwtProperties {
 
     public void setRefreshTokenTtlDays(long refreshTokenTtlDays) {
         this.refreshTokenTtlDays = refreshTokenTtlDays;
+    }
+
+    public long getAccessTokenExpirationMs() {
+        return accessTokenTtlMinutes * 60 * 1000L;
+    }
+
+    public long getRefreshTokenExpirationMs() {
+        return refreshTokenTtlDays * 24 * 60 * 60 * 1000L;
     }
 }

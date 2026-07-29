@@ -1,6 +1,6 @@
 package com.OneCampus.identity.entity;
-
 import jakarta.persistence.*;
+
 import java.util.UUID;
 
 @Entity
@@ -8,7 +8,6 @@ import java.util.UUID;
 public class Campus {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false, unique = true)
@@ -18,7 +17,8 @@ public class Campus {
         // JPA
     }
 
-    public Campus(String name) {
+    public Campus(UUID id, String name) {
+        this.id = id;
         this.name = name;
     }
 
@@ -30,4 +30,3 @@ public class Campus {
         return name;
     }
 }
-
