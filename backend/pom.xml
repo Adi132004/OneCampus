@@ -27,7 +27,8 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>19</java.version>
+		<maven.compiler.release>19</maven.compiler.release>
 	</properties>
 	<dependencies>
 		<dependency>
