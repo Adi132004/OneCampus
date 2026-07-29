@@ -1,8 +1,18 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 
 export function SignupPage() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    college: "",
+  });
+  const passwordsMatch = form.password === form.confirmPassword;
+  const canSubmit = form.name && form.email && form.password && form.confirmPassword && passwordsMatch;
   return (
     <div className="relative min-h-screen">
       <Navbar />
@@ -26,21 +36,59 @@ export function SignupPage() {
           </h2>
           <form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={(e) => e.preventDefault()}>
             <div className="sm:col-span-2">
-              <Field label="Full Name" placeholder="Jane Doe" />
+              <Field
+                label="Full Name"
+                placeholder="Enter Name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
             </div>
             <div className="sm:col-span-2">
-              <Field label="Email" type="email" placeholder="you@college.edu" />
+              <Field
+                label="Email"
+                type="email"
+                placeholder="Enter Email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
             </div>
-            <Field label="Password" type="password" placeholder="Enter a password" />
-            <Field label="Confirm Password" type="password" placeholder="Confirm password" />
-            <Field label="College" placeholder="e.g. CDAC ACTS Pune" />
-            <Field label="Department" placeholder="e.g. Computer Science" />
-            <div className="sm:col-span-2">
-              <Field label="Phone Number" type="tel" placeholder="+91 98765 43210" />
-            </div>
+            <Field
+              label="Password"
+              type="password"
+              placeholder="Enter Password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
+            <Field
+              label="Confirm Password"
+              type="password"
+              placeholder="Confirm Password"
+              value={form.confirmPassword}
+              onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+            />
+            {form.confirmPassword ? (
+              <div className="sm:col-span-2">
+                {!passwordsMatch && (
+                  <p className="mt-1 text-xs text-red-600">Passwords do not match</p>
+                )}
+                {passwordsMatch && form.password && (
+                  <p className="mt-1 text-xs text-green-600">Passwords match</p>
+                )}
+              </div>
+            ) : null}
+            <Field
+              label="College"
+              placeholder="Enter College"
+              value={form.college}
+              onChange={(e) => setForm({ ...form, college: e.target.value })}
+            />
+
             <button
               type="submit"
-              className="orange-button sm:col-span-2 mt-2 w-full rounded-full px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:-translate-y-0.5"
+              disabled={!canSubmit}
+              className={`orange-button sm:col-span-2 mt-2 w-full rounded-full px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:-translate-y-0.5 ${
+                !canSubmit ? "opacity-50 pointer-events-none" : ""
+              }`}
             >
               Register
             </button>
@@ -57,14 +105,16 @@ export function SignupPage() {
     </div>
   );
 }
-function Field({ label, type = "text", placeholder }) {
+function Field({ label, type = "text", placeholder, value, onChange }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
       <input
         type={type}
         placeholder={placeholder}
-        className="w-full rounded-full border border-white/70 bg-white/58 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground shadow-inner shadow-white/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+        value={value}
+        onChange={onChange}
+        className="w-full rounded-full border border-white/70 bg-white/58 px-4 py-3 text-sm text-foreground placeholder:text-foreground/60 shadow-inner shadow-white/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
       />
     </label>
   );

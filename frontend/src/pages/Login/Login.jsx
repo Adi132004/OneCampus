@@ -1,20 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
-import { signInWithGoogle } from "@/lib/firebase";
 
 export function LoginPage() {
-  const [googleStatus, setGoogleStatus] = useState(null);
-  async function onGoogleSignIn() {
-    setGoogleStatus("Opening Google Sign-In...");
-    try {
-      await signInWithGoogle();
-      setGoogleStatus("Signed in with Google.");
-    } catch (error) {
-      setGoogleStatus(error instanceof Error ? error.message : "Google Sign-In could not start.");
-    }
-  }
+  
   return (
     <div className="relative min-h-screen">
       <Navbar />
@@ -38,30 +27,14 @@ export function LoginPage() {
             Log in
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Choose Google, or use your email and password.
+            Use your email and password to sign in.
           </p>
 
-          <button
-            type="button"
-            onClick={onGoogleSignIn}
-            className="mt-7 flex h-12 w-full items-center justify-center gap-3 rounded-md border border-[#dadce0] bg-white px-4 text-[14px] font-medium text-[#3c4043] shadow-sm transition hover:bg-[#f8fafd] focus:outline-none focus:ring-2 focus:ring-primary/30"
-          >
-            <GoogleMark />
-            Continue with Google
-          </button>
-          {googleStatus && <p className="mt-3 text-xs text-muted-foreground">{googleStatus}</p>}
-
-          <div className="my-6 flex items-center gap-3">
-            <span className="h-px flex-1 bg-white/70" />
-            <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              or
-            </span>
-            <span className="h-px flex-1 bg-white/70" />
-          </div>
+          
 
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <Field label="Email Login" type="email" placeholder="you@college.edu" />
-            <Field label="Password Login" type="password" placeholder="Enter your password" />
+            <Field label="Email Login" type="email" placeholder="Enter Email" />
+            <Field label="Password Login" type="password" placeholder="Enter Password" />
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 text-muted-foreground">
                 <input type="checkbox" className="h-4 w-4 rounded border-border accent-primary" />
@@ -97,30 +70,9 @@ function Field({ label, type = "text", placeholder }) {
       <input
         type={type}
         placeholder={placeholder}
-        className="w-full rounded-full border border-white/70 bg-white/58 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground shadow-inner shadow-white/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+        className="w-full rounded-full border border-white/70 bg-white/58 px-4 py-3 text-sm text-foreground placeholder:text-foreground/60 shadow-inner shadow-white/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
       />
     </label>
   );
 }
-function GoogleMark() {
-  return (
-    <svg aria-hidden="true" className="h-[18px] w-[18px]" viewBox="0 0 18 18">
-      <path
-        fill="#4285F4"
-        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62z"
-      />
-      <path
-        fill="#34A853"
-        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.35 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M3.96 10.71A5.41 5.41 0 0 1 3.68 9c0-.59.1-1.16.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.04l3-2.33z"
-      />
-      <path
-        fill="#EA4335"
-        d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.9 11.42 0 9 0A9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.65 3.58 9 3.58z"
-      />
-    </svg>
-  );
-}
+
