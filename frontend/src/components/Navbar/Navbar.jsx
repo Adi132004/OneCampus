@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { getCurrentAuthUser, logoutUser, subscribeToAuth } from "@/lib/firebase";
 const links = [
   {
     to: "/",
@@ -26,6 +27,9 @@ const links = [
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState(() => getCurrentAuthUser());
+  const navigate = useNavigate();
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 14);
     onScroll();
@@ -34,6 +38,17 @@ export function Navbar() {
     });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAuth(setUser);
+    return () => unsubscribe();
+  }, []);
+
+  function handleLogout() {
+    logoutUser();
+    navigate("/");
+  }
+
   return (
 <header className="sticky top-0 z-40 flex justify-center px-4 pt-2 md:pt-3">
       <style>{`@media (min-width: 1024px){
@@ -69,18 +84,35 @@ export function Navbar() {
           ))}
         </ul>
         <div className="hidden items-center gap-4 sm:flex">
-          <Link
-            to="/login"
-            className="flex h-10 items-center rounded-full px-4 text-[15px] font-medium text-foreground/82 transition-colors hover:text-foreground"
-          >
-            Login
-          </Link>
-          <Link
-            to="/signup"
-            className="orange-button flex h-11 items-center justify-center rounded-full px-6 text-[15px] font-semibold text-white transition duration-300 hover:-translate-y-0.5"
-          >
-            Sign up
-          </Link>
+          {user ? (
+            <>
+              <span className="text-sm font-medium text-foreground/80">
+                {user.displayName || user.email}
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-full border border-white/70 bg-white/50 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="flex h-10 items-center rounded-full px-4 text-[15px] font-medium text-foreground/82 transition-colors hover:text-foreground"
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="orange-button flex h-11 items-center justify-center rounded-full px-6 text-[15px] font-semibold text-white transition duration-300 hover:-translate-y-0.5"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
         <button
           type="button"
@@ -106,20 +138,35 @@ export function Navbar() {
               </li>
             ))}
             <li className="mt-2 flex gap-2 px-2">
-              <Link
-                to="/login"
-                onClick={() => setOpen(false)}
-                className="flex-1 rounded-full border border-white/70 bg-white/50 px-4 py-2 text-center text-sm font-medium"
-              >
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                onClick={() => setOpen(false)}
-                className="orange-button flex-1 rounded-full px-4 py-2 text-center text-sm font-semibold text-white"
-              >
-                Sign up
-              </Link>
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    handleLogout();
+                  }}
+                  className="flex-1 rounded-full border border-white/70 bg-white/50 px-4 py-2 text-center text-sm font-medium"
+                >
+                  Logout
+                </button>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setOpen(false)}
+                    className="flex-1 rounded-full border border-white/70 bg-white/50 px-4 py-2 text-center text-sm font-medium"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setOpen(false)}
+                    className="orange-button flex-1 rounded-full px-4 py-2 text-center text-sm font-semibold text-white"
+                  >
+                    Sign up
+                  </Link>
+                </>
+              )}
             </li>
           </ul>
         </div>

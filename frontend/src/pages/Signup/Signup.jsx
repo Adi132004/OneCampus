@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
-import { registerWithEmailPassword } from "@/lib/firebase";
+import { getCurrentAuthUser, registerWithEmailPassword } from "@/lib/firebase";
 
 export function SignupPage() {
   const [form, setForm] = useState({
@@ -13,9 +13,16 @@ export function SignupPage() {
     college: "",
   });
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const passwordsMatch = form.password === form.confirmPassword;
   const canSubmit = form.name && form.email && form.password && form.confirmPassword && passwordsMatch;
+
+  useEffect(() => {
+    if (getCurrentAuthUser()) {
+      window.location.href = "/";
+    }
+  }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -29,7 +36,8 @@ export function SignupPage() {
         password: form.password,
         campusName: form.college,
       });
-      window.location.href = "/";
+      setSuccessMessage("Registration successful! Redirecting to home...");
+      setTimeout(() => window.location.href = "/", 1800);
     } catch (err) {
       setError(err.message || "Unable to create account. Please try again.");
     } finally {
@@ -108,6 +116,7 @@ export function SignupPage() {
             />
 
             {error ? <p className="sm:col-span-2 text-sm text-red-600">{error}</p> : null}
+            {successMessage ? <p className="sm:col-span-2 text-sm text-green-600">{successMessage}</p> : null}
             <button
               type="submit"
               disabled={!canSubmit || isSubmitting}

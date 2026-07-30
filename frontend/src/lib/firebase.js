@@ -2,6 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080
 const AUTH_STORAGE_KEY = "onecampus-auth-user";
 const ACCESS_TOKEN_STORAGE_KEY = "onecampus-access-token";
 const REFRESH_TOKEN_STORAGE_KEY = "onecampus-refresh-token";
+const authSubscribers = new Set();
 
 function getStoredAuthUser() {
   if (typeof window === "undefined") return null;
@@ -14,13 +15,26 @@ function getStoredAuthUser() {
   }
 }
 
+function notifyAuthSubscribers() {
+  const user = getStoredAuthUser();
+  authSubscribers.forEach((callback) => {
+    try {
+      callback(user);
+    } catch {
+      // ignore subscriber errors
+    }
+  });
+}
+
 function storeAuthUser(user) {
   if (typeof window === "undefined") return;
   if (user) {
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+    notifyAuthSubscribers();
     return;
   }
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  notifyAuthSubscribers();
 }
 
 function storeTokens(tokens) {
@@ -43,6 +57,7 @@ function clearAuthState() {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
   window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  notifyAuthSubscribers();
 }
 
 export function getAccessToken() {
@@ -59,9 +74,9 @@ export function isSignedIn() {
 }
 
 export function subscribeToAuth(callback) {
-  const storedUser = getStoredAuthUser();
-  callback(storedUser);
-  return () => {};
+  authSubscribers.add(callback);
+  callback(getStoredAuthUser());
+  return () => authSubscribers.delete(callback);
 }
 
 export async function loginWithEmailPassword({ email, password }) {
