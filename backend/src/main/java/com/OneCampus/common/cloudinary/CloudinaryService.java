@@ -29,4 +29,12 @@ public class CloudinaryService {
         Map result = cloudinary.uploader().upload(imageUrl, options);
         return (String) result.get("secure_url");
     }
+
+    public String uploadFile(org.springframework.web.multipart.MultipartFile file) throws Exception {
+        if (file == null || file.isEmpty()) return null;
+        Map options = ObjectUtils.asMap("resource_type", "auto");
+        @SuppressWarnings("unchecked")
+        Map result = cloudinary.uploader().upload(file.getBytes(), options);
+        return (String) result.get("secure_url");
+    }
 }

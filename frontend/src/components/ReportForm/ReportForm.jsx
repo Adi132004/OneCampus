@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { PageShell } from "../PageShell";
-import { createLostFoundItem } from "@/lib/lostFoundApi";
+import { createLostFoundItem, createLostFoundItemWithFile } from "@/lib/lostFoundApi";
 import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
 
 export function ReportForm({ kind, onDone }) {
@@ -14,6 +14,7 @@ export function ReportForm({ kind, onDone }) {
     contact: "",
     image: "",
   });
+  const [file, setFile] = useState(null);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
@@ -146,8 +147,18 @@ export function ReportForm({ kind, onDone }) {
               onChange={handleChange}
               placeholder="Phone or email"
             />
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-foreground">Photo (browse to upload)</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFile(e.target.files && e.target.files[0])}
+                className="w-full rounded-full border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm text-foreground"
+              />
+            </label>
+
             <Field
-              label="Photo URL"
+              label="Or Photo URL (optional)"
               name="image"
               value={formData.image}
               onChange={handleChange}
@@ -190,16 +201,30 @@ function Field({ label, type = "text", placeholder, textarea = false, name, valu
           placeholder={placeholder}
           className={cls}
         />
-      ) : (
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          className={cls.replace("rounded-2xl", "rounded-full")}
-        />
-      )}
-    </label>
-  );
-}
+      try {
+        if (file) {
+          await createLostFoundItemWithFile({
+            name: newItem.name,
+            description: newItem.description,
+            status: newItem.status,
+            location: newItem.location,
+            date: newItem.date,
+            contact: newItem.contact,
+            emoji: newItem.emoji,
+            image: formData.image || "",
+          }, file);
+        } else {
+          await createLostFoundItem({
+            name: newItem.name,
+            description: newItem.description,
+            status: newItem.status,
+            location: newItem.location,
+            date: newItem.date,
+            contact: newItem.contact,
+            emoji: newItem.emoji,
+            image: formData.image || "",
+          });
+        }
+        setSuccessMessage("Report created successfully. Redirecting...");
+        setTimeout(() => onDone?.(newItem), 1400);
+      } catch (err) {

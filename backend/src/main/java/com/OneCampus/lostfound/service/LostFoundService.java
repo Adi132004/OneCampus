@@ -68,6 +68,43 @@ public class LostFoundService {
         return toDto(repository.save(item));
     }
 
+    public LostFoundItemDto createWithFile(AuthenticatedUser authenticatedUser, CreateLostFoundItemRequest request, org.springframework.web.multipart.MultipartFile file) {
+        UserDto user = identityService.getCurrentUser(authenticatedUser);
+        String finalImage = request.image();
+        try {
+            if (file != null && !file.isEmpty()) {
+                String uploaded = cloudinaryService.uploadFile(file);
+                if (uploaded != null && !uploaded.isBlank()) {
+                    finalImage = uploaded;
+                }
+            } else if (finalImage != null && !finalImage.isBlank()) {
+                String uploaded = cloudinaryService.uploadRemoteImage(finalImage);
+                if (uploaded != null && !uploaded.isBlank()) {
+                    finalImage = uploaded;
+                }
+            }
+        } catch (Exception e) {
+            // ignore and fallback to provided image URL or null
+        }
+
+        LostFoundItem item = new LostFoundItem(
+                request.name(),
+                request.description(),
+                request.status(),
+                request.location(),
+                request.date(),
+                request.contact(),
+                user.campusName(),
+                authenticatedUser.campusId(),
+                user.id(),
+                user.name(),
+                user.email(),
+                request.emoji(),
+                finalImage
+        );
+        return toDto(repository.save(item));
+    }
+
     public LostFoundItemDto update(AuthenticatedUser authenticatedUser, UUID itemId, UpdateLostFoundItemRequest request) {
         LostFoundItem item = repository.findByIdAndCampusId(itemId, authenticatedUser.campusId())
                 .orElseThrow(() -> new IllegalArgumentException("Item not found"));

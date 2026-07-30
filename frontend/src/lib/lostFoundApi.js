@@ -36,6 +36,23 @@ export async function createLostFoundItem(payload) {
   return handleResponse(response);
 }
 
+export async function createLostFoundItemWithFile(payload, file) {
+  const fd = new FormData();
+  // attach JSON payload as a part named 'data'
+  fd.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+  if (file) fd.append("file", file, file.name);
+
+  const response = await fetch(`${API_BASE_URL}/api/lost-found/upload`, {
+    method: "POST",
+    headers: {
+      ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+      // DO NOT set Content-Type; browser will set the multipart boundary
+    },
+    body: fd,
+  });
+  return handleResponse(response);
+}
+
 export async function updateLostFoundItem(itemId, payload) {
   const response = await fetch(`${API_BASE_URL}/api/lost-found/${itemId}`, {
     method: "PUT",

@@ -9,6 +9,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,6 +42,18 @@ public class LostFoundController {
             return ResponseEntity.status(401).build();
         }
         return ResponseEntity.ok(lostFoundService.create(authenticatedUser, request));
+    }
+
+    @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<LostFoundItemDto> createWithFile(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @RequestPart("data") @Valid CreateLostFoundItemRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(lostFoundService.createWithFile(authenticatedUser, request, file));
     }
 
     @PutMapping("/{itemId}")

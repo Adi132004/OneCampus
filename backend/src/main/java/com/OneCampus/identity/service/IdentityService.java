@@ -40,7 +40,11 @@ public class IdentityService {
         }
 
         Campus campus = campusRepository.findByName(request.campusName())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid campus"));
+            .orElseGet(() -> {
+                // create campus if it doesn't exist yet
+                Campus c = new Campus(java.util.UUID.randomUUID(), request.campusName());
+                return campusRepository.save(c);
+            });
 
         String hashed = passwordEncoder.encode(request.password());
         User user = new User(request.name(), request.email(), hashed, campus.getId());
