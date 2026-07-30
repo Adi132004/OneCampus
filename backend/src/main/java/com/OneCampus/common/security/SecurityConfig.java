@@ -54,7 +54,7 @@ public class SecurityConfig {
                 "http://127.0.0.1:5173",
                 "http://127.0.0.1:3000",
                 "http://127.0.0.1:3005",
-                "https://your-vercel-domain.vercel.app" // update once deployed
+                "https://one-campus-phi.vercel.app" // update once deployed
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
