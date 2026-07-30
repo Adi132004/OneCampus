@@ -12,6 +12,14 @@ export function SignupPage() {
     confirmPassword: "",
     college: "",
   });
+  const campuses = [
+    "Cdac Acts Pune",
+    "Cdac Kharghar Mumbai",
+    "Sunbeam Hinjewadi",
+    "IACSD Pune",
+    "Sunbeam Kharad",
+    "VITA Mumbai",
+  ];
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -108,12 +116,21 @@ export function SignupPage() {
                 )}
               </div>
             ) : null}
-            <Field
-              label="College"
-              placeholder="Enter College"
-              value={form.college}
-              onChange={(e) => setForm({ ...form, college: e.target.value })}
-            />
+            <label className="block sm:col-span-2">
+              <span className="mb-1.5 block text-sm font-medium text-foreground">College</span>
+              <select
+                value={form.college}
+                onChange={(e) => setForm({ ...form, college: e.target.value })}
+                className="w-full rounded-full border border-white/70 bg-white/58 px-4 py-3 text-sm text-foreground placeholder:text-foreground/60 shadow-inner shadow-white/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">Select your college</option>
+                {campuses.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             {error ? <p className="sm:col-span-2 text-sm text-red-600">{error}</p> : null}
             {successMessage ? <p className="sm:col-span-2 text-sm text-green-600">{successMessage}</p> : null}

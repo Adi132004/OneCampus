@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { PageShell } from "../PageShell";
-import { addLostItem } from "@/lib/mock-data";
+import { createLostFoundItem } from "@/lib/lostFoundApi";
 import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
 
 export function ReportForm({ kind, onDone }) {
@@ -12,8 +12,10 @@ export function ReportForm({ kind, onDone }) {
     location: "",
     date: "",
     contact: "",
+    image: "",
   });
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
 
   useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
@@ -30,7 +32,7 @@ export function ReportForm({ kind, onDone }) {
     if (error) setError("");
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     if (!isSignedIn) {
@@ -64,8 +66,28 @@ export function ReportForm({ kind, onDone }) {
         : null,
     };
 
-    addLostItem(newItem);
-    onDone?.(newItem);
+    try {
+      await createLostFoundItem({
+        name: newItem.name,
+        description: newItem.description,
+        status: newItem.status,
+        location: newItem.location,
+        date: newItem.date,
+        contact: newItem.contact,
+        emoji: newItem.emoji,
+        image: formData.image || "",
+      });
+      setSuccessMessage("Report created successfully. Redirecting...");
+      setTimeout(() => onDone?.(newItem), 1400);
+    } catch (err) {
+      const msg = (err && err.message) || "";
+      if (msg === "UNAUTHORIZED" || msg.toLowerCase().includes("401") || msg.toLowerCase().includes("unauthorized")) {
+        setError("Session expired — please sign in again.");
+        setTimeout(() => nav({ to: "/login" }), 1000);
+        return;
+      }
+      setError(err.message || "Unable to submit the report. Please try again.");
+    }
   }
 
   const label = kind === "lost" ? "Lost Item" : "Found Item";
@@ -124,6 +146,19 @@ export function ReportForm({ kind, onDone }) {
               onChange={handleChange}
               placeholder="Phone or email"
             />
+            <Field
+              label="Photo URL"
+              name="image"
+              value={formData.image}
+              onChange={handleChange}
+              placeholder="https://example.com/photo.jpg"
+            />
+            {formData.image ? (
+              <p className="text-xs text-muted-foreground">
+                This photo URL will show on your item card if valid.
+              </p>
+            ) : null}
+            {successMessage ? <p className="text-sm text-green-600">{successMessage}</p> : null}
             <button
               type="submit"
               className="mt-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90"

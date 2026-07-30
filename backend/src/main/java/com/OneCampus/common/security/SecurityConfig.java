@@ -2,6 +2,7 @@ package com.OneCampus.common.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -33,9 +34,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/**",           // login, register, refresh
-                                "/ws/**",                 // websocket handshake (STOMP does its own auth on CONNECT)
-                                "/actuator/health"
+                            "/api/auth/**",           // login, register, refresh
+                            "/ws/**",                 // websocket handshake (STOMP does its own auth on CONNECT)
+                            "/actuator/health"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

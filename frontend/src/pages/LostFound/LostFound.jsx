@@ -2,21 +2,35 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Edit3, Plus, Search, Trash2, X } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
-import { deleteLostItem, formatLostItemDate, getLostItems, updateLostItem } from "@/lib/mock-data";
+import { deleteLostFoundItem, fetchLostFoundItems, updateLostFoundItem } from "@/lib/lostFoundApi";
 import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
 
 export function LostFoundPage() {
   const [tab, setTab] = useState("All");
   const [q, setQ] = useState("");
-  const [items, setItems] = useState(() => getLostItems());
+  const [items, setItems] = useState([]);
   const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
   const [editingItem, setEditingItem] = useState(null);
   const [draft, setDraft] = useState({ name: "", description: "", location: "", date: "", contact: "" });
 
   useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
 
+  useEffect(() => {
+    fetchLostFoundItems()
+      .then((items) => setItems(items))
+      .catch((err) => {
+        const msg = (err && err.message) || "";
+        if (msg === "UNAUTHORIZED" || msg.toLowerCase().includes("401") || msg.toLowerCase().includes("unauthorized")) {
+          // redirect to login preserving next
+          window.location.href = `/login?next=${encodeURIComponent("/lost-found")}`;
+          return;
+        }
+        setItems([]);
+      });
+  }, []);
+
   const currentUser = getCurrentAuthUser();
-  const currentUserKey = currentUser?.uid || currentUser?.email || null;
+  const currentUserEmail = currentUser?.email || null;
 
   const visibleItems = useMemo(() => {
     const filtered = items.filter(
@@ -31,8 +45,8 @@ export function LostFoundPage() {
   }, [items, q, tab]);
 
   function handleDelete(itemId) {
-    deleteLostItem(itemId);
-    setItems(getLostItems());
+    deleteLostFoundItem(itemId);
+    setItems((current) => current.filter((item) => item.id !== itemId));
   }
 
   function startEdit(item) {
@@ -64,15 +78,15 @@ export function LostFoundPage() {
       contact: draft.contact.trim() || editingItem.contact,
     };
 
-    updateLostItem(nextItem);
-    setItems(getLostItems());
+    updateLostFoundItem(editingItem.id, nextItem);
+    setItems((current) => current.map((item) => (item.id === editingItem.id ? { ...item, ...nextItem } : item)));
     cancelEdit();
   }
 
   function canManage(item) {
-    if (!currentUserKey) return false;
-    const owner = item.owner || {};
-    return owner.uid === currentUserKey || owner.email === currentUserKey || owner.displayName === currentUserKey;
+    if (!currentUserEmail) return false;
+    // backend items expose ownerEmail and ownerId fields
+    return item.ownerEmail === currentUserEmail;
   }
 
   return (
@@ -150,7 +164,14 @@ export function LostFoundPage() {
             </div>
             <div className="p-5">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-display text-base font-semibold text-foreground">{i.name}</h3>
+                <div>
+                  <h3 className="font-display text-base font-semibold text-foreground">{i.name}</h3>
+                  {i.ownerName ? (
+                    <div className={`text-sm ${i.ownerEmail === currentUserEmail ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                      by {i.ownerName}
+                    </div>
+                  ) : null}
+                </div>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium ${i.status === "Lost" ? "bg-primary/10 text-primary" : "bg-[oklch(0.92_0.05_150)] text-[oklch(0.35_0.12_150)]"}`}
                 >
