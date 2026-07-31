@@ -8,4 +8,10 @@ import java.util.UUID;
 
 public interface CampusRepository extends JpaRepository<Campus, UUID> {
     Optional<Campus> findByName(String name);
+
+    /**
+     * Case-insensitive campus lookup so that "ABC College" and "abc college"
+     * resolve to the same campus and never create duplicate rows.
+     */
+    Optional<Campus> findByNameIgnoreCase(String name);
 }

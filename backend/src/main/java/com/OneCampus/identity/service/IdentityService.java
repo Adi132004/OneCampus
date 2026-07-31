@@ -39,10 +39,19 @@ public class IdentityService {
             throw new IllegalArgumentException("Email already registered");
         }
 
-        Campus campus = campusRepository.findByName(request.campusName())
+        // Normalise the campus name: strip surrounding whitespace so " ABC " and
+        // "ABC" are treated as the same campus.  We keep the original casing from
+        // the very first registration that created the campus row.
+        String normalizedCampusName = request.campusName().strip();
+        if (normalizedCampusName.isBlank()) {
+            throw new IllegalArgumentException("College/Institute name is required");
+        }
+
+        Campus campus = campusRepository.findByNameIgnoreCase(normalizedCampusName)
             .orElseGet(() -> {
-                // create campus if it doesn't exist yet
-                Campus c = new Campus(java.util.UUID.randomUUID(), request.campusName());
+                // No campus found (even case-insensitively) — create a new one using
+                // the caller's provided casing as the canonical name.
+                Campus c = new Campus(java.util.UUID.randomUUID(), normalizedCampusName);
                 return campusRepository.save(c);
             });
 

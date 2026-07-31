@@ -12,15 +12,37 @@ async function handleResponse(response) {
   if (response.status === 401) {
     throw new Error("UNAUTHORIZED");
   }
+  if (response.status === 403) {
+    throw new Error("FORBIDDEN");
+  }
   const text = await response.text();
   if (!response.ok) {
-    throw new Error(text || "Lost and found request failed");
+    // Try to extract a meaningful message from the JSON error body
+    try {
+      const json = JSON.parse(text);
+      throw new Error(json.message || text || "Lost and found request failed");
+    } catch {
+      throw new Error(text || "Lost and found request failed");
+    }
   }
   return text ? JSON.parse(text) : null;
 }
 
 export async function fetchLostFoundItems() {
   const response = await fetch(`${API_BASE_URL}/api/lost-found`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  return handleResponse(response);
+}
+
+/**
+ * Fetches a single lost-found item by ID.
+ * The backend enforces campus isolation — it returns 403 if the item
+ * belongs to a different institute, and 404 if the item does not exist.
+ */
+export async function fetchLostFoundItemById(itemId) {
+  const response = await fetch(`${API_BASE_URL}/api/lost-found/${itemId}`, {
     method: "GET",
     headers: authHeaders(),
   });
@@ -67,8 +89,19 @@ export async function deleteLostFoundItem(itemId) {
     method: "DELETE",
     headers: authHeaders(),
   });
+  if (response.status === 401) {
+    throw new Error("UNAUTHORIZED");
+  }
+  if (response.status === 403) {
+    throw new Error("FORBIDDEN");
+  }
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || "Unable to delete item");
+    try {
+      const json = JSON.parse(text);
+      throw new Error(json.message || text || "Unable to delete item");
+    } catch {
+      throw new Error(text || "Unable to delete item");
+    }
   }
 }

@@ -24,7 +24,15 @@ export function SignupPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const passwordsMatch = form.password === form.confirmPassword;
-  const canSubmit = form.name && form.email && form.password && form.confirmPassword && passwordsMatch;
+  const canSubmit =
+    form.name &&
+    form.email &&
+    form.password &&
+    form.confirmPassword &&
+    passwordsMatch &&
+    // College/Institute is required — must be selected before submitting.
+    // This mirrors the @NotBlank constraint on the backend RegisterRequest.
+    form.college.trim().length > 0;
 
   useEffect(() => {
     if (getCurrentAuthUser()) {
@@ -117,10 +125,13 @@ export function SignupPage() {
               </div>
             ) : null}
             <label className="block sm:col-span-2">
-              <span className="mb-1.5 block text-sm font-medium text-foreground">College</span>
+              <span className="mb-1.5 block text-sm font-medium text-foreground">
+                College / Institute <span className="text-red-500" aria-hidden="true">*</span>
+              </span>
               <select
                 value={form.college}
                 onChange={(e) => setForm({ ...form, college: e.target.value })}
+                required
                 className="w-full rounded-full border border-white/70 bg-white/58 px-4 py-3 text-sm text-foreground placeholder:text-foreground/60 shadow-inner shadow-white/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <option value="">Select your college</option>
@@ -130,6 +141,9 @@ export function SignupPage() {
                   </option>
                 ))}
               </select>
+              {isSubmitting && !form.college && (
+                <p className="mt-1 text-xs text-red-600">Please select your college before submitting.</p>
+              )}
             </label>
 
             {error ? <p className="sm:col-span-2 text-sm text-red-600">{error}</p> : null}

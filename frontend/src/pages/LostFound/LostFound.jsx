@@ -1,17 +1,22 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Edit3, Plus, Search, Trash2, X } from "lucide-react";
+import { Edit3, MessageCircle, Plus, Search, Trash2, X } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
+import { SmartImage } from "@/components/SmartImage";
 import { deleteLostFoundItem, fetchLostFoundItems, updateLostFoundItem } from "@/lib/lostFoundApi";
-import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
+import { getCurrentAuthUser, subscribeToAuth, API_BASE_URL } from "@/lib/firebase";
+import { formatLostItemDate } from "@/lib/mock-data";
 
 export function LostFoundPage() {
+  const nav = useNavigate();
   const [tab, setTab] = useState("All");
   const [q, setQ] = useState("");
   const [items, setItems] = useState([]);
   const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
   const [editingItem, setEditingItem] = useState(null);
   const [draft, setDraft] = useState({ name: "", description: "", location: "", date: "", contact: "" });
+  const [chattingWith, setChattingWith] = useState(null);
+  const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
 
@@ -30,7 +35,6 @@ export function LostFoundPage() {
   }, []);
 
   const currentUser = getCurrentAuthUser();
-  const currentUserEmail = currentUser?.email || null;
 
   const visibleItems = useMemo(() => {
     const filtered = items.filter(
@@ -44,9 +48,23 @@ export function LostFoundPage() {
     });
   }, [items, q, tab]);
 
-  function handleDelete(itemId) {
-    deleteLostFoundItem(itemId);
-    setItems((current) => current.filter((item) => item.id !== itemId));
+  async function handleDelete(itemId) {
+    try {
+      await deleteLostFoundItem(itemId);
+      // Only remove from local state AFTER the backend confirms deletion
+      setItems((current) => current.filter((item) => item.id !== itemId));
+    } catch (err) {
+      const msg = err?.message || "";
+      if (msg === "UNAUTHORIZED") {
+        window.location.href = `/login?next=${encodeURIComponent("/lost-found")}`;
+        return;
+      }
+      if (msg === "FORBIDDEN") {
+        window.alert("You do not have permission to delete this item.");
+        return;
+      }
+      window.alert(err.message || "Unable to delete item. Please try again.");
+    }
   }
 
   function startEdit(item) {
@@ -65,7 +83,7 @@ export function LostFoundPage() {
     setDraft({ name: "", description: "", location: "", date: "", contact: "" });
   }
 
-  function saveEdit(event) {
+  async function saveEdit(event) {
     event.preventDefault();
     if (!editingItem) return;
 
@@ -78,15 +96,67 @@ export function LostFoundPage() {
       contact: draft.contact.trim() || editingItem.contact,
     };
 
-    updateLostFoundItem(editingItem.id, nextItem);
-    setItems((current) => current.map((item) => (item.id === editingItem.id ? { ...item, ...nextItem } : item)));
-    cancelEdit();
+    try {
+      const updated = await updateLostFoundItem(editingItem.id, nextItem);
+      // Only update local state AFTER the backend confirms the update
+      setItems((current) =>
+        current.map((item) => (item.id === editingItem.id ? { ...item, ...updated } : item)),
+      );
+      cancelEdit();
+    } catch (err) {
+      const msg = err?.message || "";
+      if (msg === "UNAUTHORIZED") {
+        window.location.href = `/login?next=${encodeURIComponent("/lost-found")}`;
+        return;
+      }
+      if (msg === "FORBIDDEN") {
+        window.alert("You do not have permission to edit this item.");
+        cancelEdit();
+        return;
+      }
+      window.alert(err.message || "Unable to save changes. Please try again.");
+    }
   }
 
+  /**
+   * Returns true if the logged-in user owns this item.
+   * Compares the item's ownerId (UUID from backend) against the uid stored in
+   * the auth object, which is the same UUID the backend puts in the JWT subject.
+   * Using the UUID avoids any email-based identity confusion.
+   */
   function canManage(item) {
-    if (!currentUserEmail) return false;
-    // backend items expose ownerEmail and ownerId fields
-    return item.ownerEmail === currentUserEmail;
+    if (!currentUser?.uid) return false;
+    return String(item.ownerId) === String(currentUser.uid);
+  }
+
+  async function startChat(item) {
+    if (!isSignedIn) {
+      window.location.href = `/login?next=${encodeURIComponent("/lost-found")}`;
+      return;
+    }
+    setChatLoading(true);
+    setChattingWith(item.id);
+    try {
+      const token = getCurrentAuthUser()?.accessToken || localStorage.getItem("onecampus-access-token");
+      const response = await fetch(`${API_BASE_URL}/api/chat/conversations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ lostReportId: item.id, otherUserId: item.ownerId }),
+      });
+      if (!response.ok) {
+        throw new Error("Unable to open chat right now.");
+      }
+      const conversation = await response.json();
+      nav({ to: `/chat?conversation=${conversation.id}` });
+    } catch (error) {
+      setChattingWith(null);
+      window.alert(error.message || "Unable to open chat.");
+    } finally {
+      setChatLoading(false);
+    }
   }
 
   return (
@@ -152,7 +222,12 @@ export function LostFoundPage() {
             >
             <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[linear-gradient(135deg,rgba(232,89,12,0.14),rgba(15,23,42,0.06))]">
               {i.image ? (
-                <img src={i.image} alt={i.name} className="h-full w-full object-cover" />
+                <SmartImage
+                  src={i.image}
+                  fallbackSeed={i.id}
+                  alt={i.name}
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="text-center">
                   <div className="text-4xl">{i.emoji || "🧾"}</div>
@@ -167,38 +242,38 @@ export function LostFoundPage() {
                 <div>
                   <h3 className="font-display text-base font-semibold text-foreground">{i.name}</h3>
                   {i.ownerName ? (
-                    <div className={`text-sm ${i.ownerEmail === currentUserEmail ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                    <div className={`text-sm ${canManage(i) ? "text-primary font-semibold" : "text-muted-foreground"}`}>
                       by {i.ownerName}
                     </div>
                   ) : null}
                 </div>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${i.status === "Lost" ? "bg-primary/10 text-primary" : "bg-[oklch(0.92_0.05_150)] text-[oklch(0.35_0.12_150)]"}`}
-                >
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${i.status === "Lost" ? "bg-primary/10 text-primary" : "bg-[oklch(0.92_0.05_150)] text-[oklch(0.35_0.12_150)]"}`}>
                   {i.status}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{i.description}</p>
+              <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{i.description}</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] text-muted-foreground font-mono uppercase tracking-wider">
                 <span>📍 {i.location}</span>
                 <span>📅 {formatLostItemDate(i.date)}</span>
                 <span>🎓 {i.college}</span>
                 <span>{i.contact ? `📞 ${i.contact}` : "Open"}</span>
               </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
+                  View Details
+                </button>
+                {!canManage(i) ? (
+                  <button type="button" onClick={() => startChat(i)} disabled={chatLoading && chattingWith === i.id} className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-70">
+                    <MessageCircle className="h-3.5 w-3.5" /> {chatLoading && chattingWith === i.id ? "Opening..." : "Report Found"}
+                  </button>
+                ) : null}
+              </div>
               {canManage(i) ? (
                 <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(i)}
-                    className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
-                  >
+                  <button type="button" onClick={() => startEdit(i)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
                     <Edit3 className="h-3.5 w-3.5" /> Edit
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(i.id)}
-                    className="inline-flex items-center gap-1 rounded-full border border-destructive/20 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
-                  >
+                  <button type="button" onClick={() => handleDelete(i.id)} className="inline-flex items-center gap-1 rounded-full border border-destructive/20 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10">
                     <Trash2 className="h-3.5 w-3.5" /> Delete
                   </button>
                 </div>

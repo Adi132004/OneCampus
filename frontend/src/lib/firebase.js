@@ -79,6 +79,41 @@ export function subscribeToAuth(callback) {
   return () => authSubscribers.delete(callback);
 }
 
+export async function fetchCurrentUserProfile(accessToken) {
+  if (typeof window === "undefined" || !accessToken) return null;
+
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+  return {
+    uid: data.id,
+    name: data.name,
+    email: data.email,
+    campusId: data.campusId,
+    campusName: data.campusName,
+  };
+}
+
+export async function refreshCurrentAuthUser() {
+  const token = getAccessToken();
+  if (!token) return null;
+
+  const user = await fetchCurrentUserProfile(token);
+  if (!user) return null;
+
+  const profile = { ...user, accessToken: token };
+  storeAuthUser(profile);
+  return profile;
+}
+
 export async function loginWithEmailPassword({ email, password }) {
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: "POST",
@@ -94,14 +129,16 @@ export async function loginWithEmailPassword({ email, password }) {
   }
 
   const data = await response.json();
-  const profile = {
-    email,
-    accessToken: data.accessToken,
-  };
-
-  storeAuthUser(profile);
   storeTokens(data);
-  return profile;
+
+  const profile = await fetchCurrentUserProfile(data.accessToken);
+  if (!profile) {
+    throw new Error("Unable to load authenticated user profile.");
+  }
+
+  const userProfile = { ...profile, accessToken: data.accessToken };
+  storeAuthUser(userProfile);
+  return userProfile;
 }
 
 export async function registerWithEmailPassword({ name, email, password, campusName }) {
@@ -119,14 +156,16 @@ export async function registerWithEmailPassword({ name, email, password, campusN
   }
 
   const data = await response.json();
-  const profile = {
-    email,
-    accessToken: data.accessToken,
-  };
-
-  storeAuthUser(profile);
   storeTokens(data);
-  return profile;
+
+  const profile = await fetchCurrentUserProfile(data.accessToken);
+  if (!profile) {
+    throw new Error("Unable to load authenticated user profile.");
+  }
+
+  const userProfile = { ...profile, accessToken: data.accessToken };
+  storeAuthUser(userProfile);
+  return userProfile;
 }
 
 export function logoutUser() {
