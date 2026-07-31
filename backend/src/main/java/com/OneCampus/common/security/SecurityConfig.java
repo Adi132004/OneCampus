@@ -49,15 +49,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "http://localhost:3005",
-                "http://127.0.0.1:5173",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:3005",
-                "https://one-campus-phi.vercel.app" ,
-                "https://one-campus-nlk6q282i-aditya-shahane-s-projects.vercel.app/"// update once deployed
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "https://*.vercel.app",
+                "https://*.onrender.com"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
