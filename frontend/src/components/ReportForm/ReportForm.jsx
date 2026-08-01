@@ -66,8 +66,8 @@ function CategoryDropdown({ value, onChange, hasError }) {
       zIndex: 99999,
       border: "1.5px solid var(--border)",
       borderRadius: "16px",
-      background: "var(--card)",
-      boxShadow: "0 12px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)",
+      background: "white",
+      boxShadow: "0 24px 80px rgba(0,0,0,0.18)",
       padding: "6px",
       // Open downward or upward depending on available space
       ...(openUpward
@@ -118,7 +118,7 @@ function CategoryDropdown({ value, onChange, hasError }) {
   const triggerCls = [
     "w-full flex items-center justify-between gap-2",
     "rounded-2xl border px-4 py-2.5 text-sm cursor-pointer select-none",
-    "bg-[var(--surface-2)] transition-all duration-150",
+    "bg-white transition-all duration-150",
     "focus:outline-none focus:ring-2 focus:ring-primary/30",
     hasError && !value
       ? "border-red-400"
@@ -133,7 +133,10 @@ function CategoryDropdown({ value, onChange, hasError }) {
       ref={panelRef}
       role="listbox"
       aria-label="Category options"
-      style={panelStyle}
+      style={{
+        ...panelStyle,
+        background: "white",
+      }}
     >
       {CATEGORIES.map((cat) => {
         const isSelected = value === cat;
@@ -158,11 +161,11 @@ function CategoryDropdown({ value, onChange, hasError }) {
               cursor: "pointer",
               fontWeight: isSelected ? 600 : 400,
               color: isSelected ? "var(--primary)" : "var(--foreground)",
-              background: isSelected ? "oklch(from var(--primary) l c h / 0.10)" : "transparent",
+              background: isSelected ? "rgba(255, 112, 31, 0.12)" : "white",
               transition: "background 0.12s ease, color 0.12s ease",
             }}
-            onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--muted)"; }}
-            onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+            onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "#f5f5f5"; }}
+            onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "white"; }}
           >
             <span>{cat}</span>
             {isSelected && (
