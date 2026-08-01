@@ -12,6 +12,10 @@ const links = [
     label: "Marketplace",
   },
   {
+    to: "/events",
+    label: "Events",
+  },
+  {
     to: "/lost-found",
     label: "Lost & Found",
   },
