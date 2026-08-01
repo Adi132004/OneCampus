@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import { UploadCloud, ChevronDown, Check } from "lucide-react";
 import { PageShell } from "../PageShell";
@@ -27,43 +28,96 @@ const CATEGORIES = [
 ];
 
 // ─── CategoryDropdown ─────────────────────────────────────────────────────
-// A custom dropdown that mimics the College <select> style used in Signup,
-// adapted to the ReportForm design tokens (surface-2 bg, rounded-2xl, etc.).
-// The dropdown panel shows ALL options without any internal scroll bar.
+// ROOT CAUSE OF THE BUG: The old panel used position:absolute inside the form
+// card. Any ancestor with overflow:hidden, a CSS transform, or an opacity
+// transition creates a new stacking context that clips or buries the panel
+// regardless of z-index. The only reliable fix is a React Portal — the panel
+// is rendered directly on <body>, completely outside the form DOM tree.
+//
+// Position is calculated live from getBoundingClientRect() and auto-flips
+// upward when there is not enough viewport space below the trigger.
 function CategoryDropdown({ value, onChange, hasError }) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef(null);
+  const [panelStyle, setPanelStyle] = useState({});
+  const triggerRef = useRef(null);
   const panelRef = useRef(null);
 
-  // Close when clicking outside
-  useEffect(() => {
-    function handleOutsideClick(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
+  // ── Position calculation ────────────────────────────────────────────────
+  // Called every time the panel opens and on every scroll/resize event while
+  // the panel is visible. Uses viewport-relative coords (fixed positioning)
+  // so page scroll does not affect placement.
+  function calcPosition() {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const GAP = 6; // px gap between trigger and panel
 
-  // Keyboard navigation
-  function handleKeyDown(e) {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      setOpen((prev) => !prev);
+    // Estimate panel height: 16 options × ~37px per row + 12px padding
+    const estimatedPanelHeight = CATEGORIES.length * 37 + 12;
+
+    const spaceBelow = viewportHeight - rect.bottom - GAP;
+    const spaceAbove = rect.top - GAP;
+    const openUpward = spaceBelow < estimatedPanelHeight && spaceAbove > spaceBelow;
+
+    setPanelStyle({
+      position: "fixed",
+      left: rect.left,
+      width: rect.width,
+      zIndex: 99999,
+      border: "1.5px solid var(--border)",
+      borderRadius: "16px",
+      background: "var(--card)",
+      boxShadow: "0 12px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)",
+      padding: "6px",
+      // Open downward or upward depending on available space
+      ...(openUpward
+        ? { bottom: viewportHeight - rect.top + GAP }
+        : { top: rect.bottom + GAP }),
+    });
+  }
+
+  // Recalculate when the panel opens and keep it in sync during scroll/resize
+  useEffect(() => {
+    if (!open) return;
+    calcPosition();
+
+    window.addEventListener("scroll", calcPosition, true); // capture phase catches nested scrollers
+    window.addEventListener("resize", calcPosition);
+    return () => {
+      window.removeEventListener("scroll", calcPosition, true);
+      window.removeEventListener("resize", calcPosition);
+    };
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Outside-click closes the panel ────────────────────────────────────
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(e) {
+      const clickedTrigger = triggerRef.current?.contains(e.target);
+      const clickedPanel = panelRef.current?.contains(e.target);
+      if (!clickedTrigger && !clickedPanel) setOpen(false);
     }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
+  // ── Keyboard navigation ────────────────────────────────────────────────
+  function handleTriggerKeyDown(e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((p) => !p); }
     if (e.key === "Escape") setOpen(false);
-    if (e.key === "ArrowDown" && !open) setOpen(true);
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && !open) setOpen(true);
   }
 
   function select(cat) {
     onChange(cat);
     setOpen(false);
+    triggerRef.current?.focus();
   }
 
+  // ── Trigger class ──────────────────────────────────────────────────────
   const triggerCls = [
     "w-full flex items-center justify-between gap-2",
-    "rounded-2xl border px-4 py-2.5 text-sm cursor-pointer",
+    "rounded-2xl border px-4 py-2.5 text-sm cursor-pointer select-none",
     "bg-[var(--surface-2)] transition-all duration-150",
     "focus:outline-none focus:ring-2 focus:ring-primary/30",
     hasError && !value
@@ -73,18 +127,66 @@ function CategoryDropdown({ value, onChange, hasError }) {
       : "border-border hover:border-primary/40",
   ].join(" ");
 
+  // ── Portal panel ──────────────────────────────────────────────────────
+  const panel = (
+    <div
+      ref={panelRef}
+      role="listbox"
+      aria-label="Category options"
+      style={panelStyle}
+    >
+      {CATEGORIES.map((cat) => {
+        const isSelected = value === cat;
+        return (
+          <div
+            key={cat}
+            role="option"
+            aria-selected={isSelected}
+            tabIndex={0}
+            onClick={() => select(cat)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(cat); }
+              if (e.key === "Escape") { setOpen(false); triggerRef.current?.focus(); }
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "8px 12px",
+              borderRadius: "10px",
+              fontSize: "14px",
+              cursor: "pointer",
+              fontWeight: isSelected ? 600 : 400,
+              color: isSelected ? "var(--primary)" : "var(--foreground)",
+              background: isSelected ? "oklch(from var(--primary) l c h / 0.10)" : "transparent",
+              transition: "background 0.12s ease, color 0.12s ease",
+            }}
+            onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--muted)"; }}
+            onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+          >
+            <span>{cat}</span>
+            {isSelected && (
+              <Check style={{ width: "14px", height: "14px", color: "var(--primary)", flexShrink: 0 }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div ref={containerRef} style={{ position: "relative" }}>
-      {/* Trigger button — styled identically to Field inputs */}
+    <div style={{ position: "relative" }}>
+      {/* Trigger — styled identically to every other Field input */}
       <div
+        ref={triggerRef}
         role="combobox"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label="Select category"
         tabIndex={0}
         className={triggerCls}
-        onClick={() => setOpen((prev) => !prev)}
-        onKeyDown={handleKeyDown}
+        onClick={() => setOpen((p) => !p)}
+        onKeyDown={handleTriggerKeyDown}
       >
         <span className={value ? "text-foreground" : "text-muted-foreground"}>
           {value || "Select a category"}
@@ -95,84 +197,14 @@ function CategoryDropdown({ value, onChange, hasError }) {
         />
       </div>
 
-      {/* Dropdown panel — absolutely positioned, no overflow/scroll */}
-      {open && (
-        <div
-          ref={panelRef}
-          role="listbox"
-          aria-label="Category options"
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            zIndex: 9999,
-            // Show below the trigger; if near bottom of viewport, open upward
-            top: "calc(100% + 6px)",
-            border: "1.5px solid var(--border)",
-            borderRadius: "16px",
-            background: "var(--card)",
-            boxShadow: "0 12px 40px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.07)",
-            padding: "6px",
-            // No max-height / overflow: shows every option with no scrollbar
-          }}
-        >
-          {CATEGORIES.map((cat) => {
-            const isSelected = value === cat;
-            return (
-              <div
-                key={cat}
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => select(cat)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    select(cat);
-                  }
-                }}
-                tabIndex={0}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 12px",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  fontWeight: isSelected ? 600 : 400,
-                  color: isSelected ? "var(--primary)" : "var(--foreground)",
-                  background: isSelected
-                    ? "oklch(from var(--primary) l c h / 0.10)"
-                    : "transparent",
-                  transition: "background 0.12s ease, color 0.12s ease",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = "var(--muted)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = "transparent";
-                  }
-                }}
-              >
-                <span>{cat}</span>
-                {isSelected && (
-                  <Check
-                    style={{ width: "14px", height: "14px", color: "var(--primary)", flexShrink: 0 }}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Portal: rendered on <body>, escaping all parent stacking contexts */}
+      {open && createPortal(panel, document.body)}
     </div>
   );
 }
 
 // ─── ReportForm ────────────────────────────────────────────────────────────
+
 export function ReportForm({ kind, onDone }) {
   const nav = useNavigate();
   const fileInputRef = useRef(null);
