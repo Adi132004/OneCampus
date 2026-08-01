@@ -61,21 +61,27 @@ public class LostFoundService {
     public LostFoundItemDto createWithFile(AuthenticatedUser authenticatedUser, CreateLostFoundItemRequest request, org.springframework.web.multipart.MultipartFile file) {
         UserDto user = identityService.getCurrentUser(authenticatedUser);
         String finalImage = null;
-        try {
-            if (file != null && !file.isEmpty()) {
+
+        if (file != null && !file.isEmpty()) {
+            try {
                 String uploaded = cloudinaryService.uploadFile(file);
-                // Only accept a proper HTTPS Cloudinary URL — discard null, blank, or anything else.
+                // Cloudinary returned a valid HTTPS URL — use it
                 if (uploaded != null && uploaded.startsWith("https://")) {
                     finalImage = uploaded;
                 } else {
+                    // Should not happen after the hardened CloudinaryService, but guard anyway
                     System.err.println("[LostFoundService] Cloudinary returned an unexpected URL: " + uploaded);
+                    throw new RuntimeException("Image upload failed: Cloudinary did not return a valid URL.");
                 }
+            } catch (IllegalArgumentException e) {
+                // Validation error (wrong file type / size) — propagate so the client gets a 400
+                throw e;
+            } catch (Exception e) {
+                // Network / Cloudinary API error — log and propagate a 500 so the client knows
+                System.err.println("[LostFoundService] Cloudinary upload failed: " + e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException("Image upload failed: " + e.getMessage(), e);
             }
-        } catch (Exception e) {
-            // Log the real error so it is visible in the Spring Boot console.
-            // The item will be saved without an image rather than failing the entire request.
-            System.err.println("[LostFoundService] Cloudinary upload failed: " + e.getMessage());
-            e.printStackTrace();
         }
 
         LostFoundItem item = new LostFoundItem(
@@ -150,6 +156,7 @@ public class LostFoundService {
                 item.getContact(),
                 item.getCollege(),
                 item.getEmoji(),
+                item.getImage(),
                 item.getImage(),
                 item.getCategory(),
                 item.getOwnerId(),

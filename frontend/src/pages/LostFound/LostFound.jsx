@@ -223,9 +223,9 @@ export function LostFoundPage() {
               }}
             >
             <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[linear-gradient(135deg,rgba(232,89,12,0.14),rgba(15,23,42,0.06))]">
-              {i.image ? (
+              {i.image || i.imageUrl ? (
                 <SmartImage
-                  src={i.image}
+                  src={i.image || i.imageUrl}
                   fallbackSeed={i.id}
                   alt={i.name}
                   className="h-full w-full object-cover"

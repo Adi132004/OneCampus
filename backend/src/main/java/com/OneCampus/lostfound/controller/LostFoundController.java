@@ -84,12 +84,13 @@ public class LostFoundController {
             LostFoundItemDto dto = lostFoundService.createWithFile(authenticatedUser, request, file);
             return ResponseEntity.ok(dto);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, e.getMessage(), e);
         } catch (Exception e) {
-            // log and return 500 with a simple message
             System.err.println("Error uploading lost/found item: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(500).body(null);
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Image upload failed: " + e.getMessage(), e);
         }
     }
 
