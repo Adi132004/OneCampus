@@ -373,8 +373,8 @@ export function ReportForm({ kind, onDone }) {
           }}
           className={`group flex min-h-[340px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[2rem] border border-dashed p-6 text-center transition-all duration-300 ${
             dragActive
-              ? "border-primary bg-primary/10 shadow-[0_24px_70px_-24px_rgba(37,99,235,0.45)]"
-              : "border-border bg-white/95 hover:-translate-y-1 shadow-2xl"
+              ? "border-primary bg-white shadow-[0_24px_70px_-24px_rgba(37,99,235,0.45)]"
+              : "border-border bg-white hover:-translate-y-1 shadow-2xl"
           }`}
         >
           {previewUrl ? (
@@ -395,7 +395,7 @@ export function ReportForm({ kind, onDone }) {
         </div>
 
         {/* ── Right: form fields ── */}
-        <div className="rounded-[2rem] border border-border bg-white/95 p-6 shadow-2xl shadow-slate-200/50 backdrop-blur-xl">
+        <div className="rounded-[2rem] border border-border bg-white p-6 shadow-2xl shadow-slate-200/50">
           <div className="grid gap-4">
             {error ? (
               <p className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
