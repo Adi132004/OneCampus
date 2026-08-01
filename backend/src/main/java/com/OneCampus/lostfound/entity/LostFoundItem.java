@@ -52,6 +52,9 @@ public class LostFoundItem {
     @Column
     private String image;
 
+    @Column
+    private String category;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -72,7 +75,8 @@ public class LostFoundItem {
             String ownerName,
             String ownerEmail,
             String emoji,
-            String image
+            String image,
+            String category
     ) {
         this.name = name;
         this.description = description;
@@ -87,6 +91,7 @@ public class LostFoundItem {
         this.ownerEmail = ownerEmail;
         this.emoji = emoji;
         this.image = image;
+        this.category = category;
         this.createdAt = Instant.now();
     }
 
@@ -196,6 +201,14 @@ public class LostFoundItem {
 
     public void setImage(String image) {
         this.image = image;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public Instant getCreatedAt() {

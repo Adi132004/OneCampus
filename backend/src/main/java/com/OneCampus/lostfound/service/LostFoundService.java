@@ -52,7 +52,8 @@ public class LostFoundService {
                 user.name(),
                 user.email(),
                 request.emoji(),
-                null
+                null,
+                request.category()
         );
         return toDto(repository.save(item));
     }
@@ -90,7 +91,8 @@ public class LostFoundService {
                 user.name(),
                 user.email(),
                 request.emoji(),
-                finalImage
+                finalImage,
+                request.category()
         );
         return toDto(repository.save(item));
     }
@@ -105,6 +107,9 @@ public class LostFoundService {
         item.setDate(request.date());
         item.setContact(request.contact());
         item.setEmoji(request.emoji());
+        if (request.category() != null) {
+            item.setCategory(request.category());
+        }
         return toDto(repository.save(item));
     }
 
@@ -146,6 +151,7 @@ public class LostFoundService {
                 item.getCollege(),
                 item.getEmoji(),
                 item.getImage(),
+                item.getCategory(),
                 item.getOwnerId(),
                 item.getOwnerName(),
                 item.getOwnerEmail(),

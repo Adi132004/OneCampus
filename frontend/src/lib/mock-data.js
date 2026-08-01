@@ -137,7 +137,16 @@ export function formatLostItemDate(value) {
   if (/^\d+\s+days?\s+ago$/i.test(text)) return text;
   if (/^\d+\s+weeks?\s+ago$/i.test(text)) return text;
 
-  const parsed = new Date(text);
+  // IMPORTANT: Date-only ISO strings like "2026-08-02" are parsed as UTC
+  // midnight by all browsers, which shifts the date back by the local UTC
+  // offset (e.g. UTC+5:30 shows the previous day). Appending "T00:00:00"
+  // with no "Z" suffix forces the browser to treat it as *local* midnight.
+  let parseTarget = text;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    parseTarget = text + "T00:00:00";
+  }
+
+  const parsed = new Date(parseTarget);
   if (Number.isNaN(parsed.getTime())) return text;
 
   const today = new Date();

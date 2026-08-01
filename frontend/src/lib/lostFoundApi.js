@@ -64,10 +64,14 @@ export async function createLostFoundItemWithFile(payload, file) {
   fd.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
   if (file) fd.append("file", file, file.name);
 
+  // Snapshot the token once so both the header value and the conditional check
+  // are consistent even if the token storage is updated between calls.
+  const token = getAccessToken();
+
   const response = await fetch(`${API_BASE_URL}/api/lost-found/upload`, {
     method: "POST",
     headers: {
-      ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       // DO NOT set Content-Type; browser will set the multipart boundary
     },
     body: fd,

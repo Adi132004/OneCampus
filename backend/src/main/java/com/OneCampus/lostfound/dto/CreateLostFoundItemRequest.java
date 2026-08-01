@@ -9,6 +9,7 @@ public record CreateLostFoundItemRequest(
         @NotBlank(message = "Last seen location is required") String location,
         @NotBlank(message = "Date is required") String date,
         @NotBlank(message = "Contact details are required") String contact,
-        String emoji
+        String emoji,
+        String category
 ) {
 }

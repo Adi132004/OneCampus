@@ -14,7 +14,7 @@ export function LostFoundPage() {
   const [items, setItems] = useState([]);
   const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
   const [editingItem, setEditingItem] = useState(null);
-  const [draft, setDraft] = useState({ name: "", description: "", location: "", date: "", contact: "" });
+  const [draft, setDraft] = useState({ name: "", description: "", location: "", date: "", contact: "", category: "" });
   const [chattingWith, setChattingWith] = useState(null);
   const [chatLoading, setChatLoading] = useState(false);
 
@@ -75,12 +75,13 @@ export function LostFoundPage() {
       location: item.location || "",
       date: item.date || "",
       contact: item.contact || "",
+      category: item.category || "",
     });
   }
 
   function cancelEdit() {
     setEditingItem(null);
-    setDraft({ name: "", description: "", location: "", date: "", contact: "" });
+    setDraft({ name: "", description: "", location: "", date: "", contact: "", category: "" });
   }
 
   async function saveEdit(event) {
@@ -94,6 +95,7 @@ export function LostFoundPage() {
       location: draft.location.trim() || editingItem.location,
       date: draft.date || editingItem.date,
       contact: draft.contact.trim() || editingItem.contact,
+      category: draft.category || editingItem.category,
     };
 
     try {
@@ -241,8 +243,13 @@ export function LostFoundPage() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-display text-base font-semibold text-foreground">{i.name}</h3>
+                  {i.category ? (
+                    <div className="mt-1 inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {i.category}
+                    </div>
+                  ) : null}
                   {i.ownerName ? (
-                    <div className={`text-sm ${canManage(i) ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                    <div className={`mt-1 text-sm ${canManage(i) ? "text-primary font-semibold" : "text-muted-foreground"}`}>
                       by {i.ownerName}
                     </div>
                   ) : null}
@@ -331,6 +338,15 @@ export function LostFoundPage() {
                 <input
                   value={draft.contact}
                   onChange={(event) => setDraft((prev) => ({ ...prev, contact: event.target.value }))}
+                  className="w-full rounded-full border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block text-sm font-medium text-foreground">
+                <span className="mb-1.5 block">Category</span>
+                <input
+                  value={draft.category}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, category: event.target.value }))}
+                  placeholder="e.g. Electronics, Keys…"
                   className="w-full rounded-full border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm"
                 />
               </label>
