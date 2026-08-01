@@ -17,10 +17,12 @@ import { Route as AboutRouteImport } from './../routes/about'
 import { Route as IndexRouteImport } from './../routes/index'
 import { Route as MarketplaceIndexRouteImport } from './../routes/marketplace.index'
 import { Route as LostFoundIndexRouteImport } from './../routes/lost-found.index'
+import { Route as EventsIndexRouteImport } from './../routes/events.index'
 import { Route as MarketplaceSellRouteImport } from './../routes/marketplace.sell'
 import { Route as MarketplaceIdRouteImport } from './../routes/marketplace.$id'
 import { Route as LostFoundReportLostRouteImport } from './../routes/lost-found.report-lost'
 import { Route as LostFoundReportFoundRouteImport } from './../routes/lost-found.report-found'
+import { Route as EventsCreateRouteImport } from './../routes/events.create'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -62,6 +64,11 @@ const LostFoundIndexRoute = LostFoundIndexRouteImport.update({
   path: '/lost-found/',
   getParentRoute: () => rootRouteImport,
 })
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => rootRouteImport,
+})
 const MarketplaceSellRoute = MarketplaceSellRouteImport.update({
   id: '/marketplace/sell',
   path: '/marketplace/sell',
@@ -82,6 +89,11 @@ const LostFoundReportFoundRoute = LostFoundReportFoundRouteImport.update({
   path: '/lost-found/report-found',
   getParentRoute: () => rootRouteImport,
 })
+const EventsCreateRoute = EventsCreateRouteImport.update({
+  id: '/events/create',
+  path: '/events/create',
+  getParentRoute: () => rootRouteImport,
+})
 
 const rootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -90,10 +102,12 @@ const rootRouteChildren = {
   ContactRoute: ContactRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  EventsCreateRoute: EventsCreateRoute,
   LostFoundReportFoundRoute: LostFoundReportFoundRoute,
   LostFoundReportLostRoute: LostFoundReportLostRoute,
   MarketplaceIdRoute: MarketplaceIdRoute,
   MarketplaceSellRoute: MarketplaceSellRoute,
+  EventsIndexRoute: EventsIndexRoute,
   LostFoundIndexRoute: LostFoundIndexRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,
 }
