@@ -1,6 +1,6 @@
 import { getAccessToken } from "@/lib/firebase";
 
-const API_URL = "http://localhost:8080/api/marketplace";
+const API_URL = `${import.meta.env.VITE_API_URL}/api/marketplace`;
 
 function getHeaders() {
   const token = getAccessToken();
