@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Edit3, MessageCircle, Plus, RefreshCw, Search, Trash2, UploadCloud, X } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { SmartImage } from "@/components/SmartImage";
@@ -52,8 +52,12 @@ export function LostFoundPage() {
   }
 
   const visibleItems = useMemo(() => {
+    const lq = q.toLowerCase();
     const filtered = items.filter((i) => {
-      const matchesQuery = i.name.toLowerCase().includes(q.toLowerCase());
+      const matchesQuery =
+        (i.name || "").toLowerCase().includes(lq) ||
+        (i.description || "").toLowerCase().includes(lq) ||
+        (i.location || "").toLowerCase().includes(lq);
       if (!matchesQuery) return false;
       if (tab === "All") return true;
       if (tab === "My Posts") return canManage(i);
@@ -197,17 +201,6 @@ export function LostFoundPage() {
     } finally {
       setIsSavingEdit(false);
     }
-  }
-
-  /**
-   * Returns true if the logged-in user owns this item.
-   * Compares the item's ownerId (UUID from backend) against the uid stored in
-   * the auth object, which is the same UUID the backend puts in the JWT subject.
-   * Using the UUID avoids any email-based identity confusion.
-   */
-  function canManage(item) {
-    if (!currentUser?.uid) return false;
-    return String(item.ownerId) === String(currentUser.uid);
   }
 
   async function handleRepost(item, targetStatus) {
@@ -374,7 +367,7 @@ export function LostFoundPage() {
                 </button>
                 {!canManage(i) ? (
                   <button type="button" onClick={() => startChat(i)} disabled={chatLoading && chattingWith === i.id} className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-70">
-                    <MessageCircle className="h-3.5 w-3.5" /> {chatLoading && chattingWith === i.id ? "Opening..." : "Report Found"}
+                    <MessageCircle className="h-3.5 w-3.5" /> {chatLoading && chattingWith === i.id ? "Opening..." : "Message"}
                   </button>
                 ) : null}
               </div>

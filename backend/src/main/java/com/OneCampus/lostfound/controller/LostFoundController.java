@@ -119,6 +119,42 @@ public class LostFoundController {
     }
 
     /**
+     * Updates a lost-found item with an optional new image file.
+     *
+     * Called by the frontend when the user edits an item and selects a new image.
+     * The JSON payload is sent as a multipart part named "data", and the file as "file".
+     *
+     * <ul>
+     *   <li>403 Forbidden – if the authenticated user is not the item's owner</li>
+     *   <li>403 Forbidden – if the item belongs to a different campus</li>
+     *   <li>404 Not Found – if the item does not exist</li>
+     * </ul>
+     */
+    @PutMapping(path = "/{itemId}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<LostFoundItemDto> updateWithFile(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @PathVariable UUID itemId,
+            @RequestPart("data") @Valid UpdateLostFoundItemRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        try {
+            LostFoundItemDto dto = lostFoundService.updateWithFile(authenticatedUser, itemId, request, file);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalArgumentException e) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        } catch (Exception e) {
+            System.err.println("Error updating lost/found item with file: " + e.getMessage());
+            e.printStackTrace();
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Image upload failed: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Deletes a lost-found item.
      *
      * <ul>
