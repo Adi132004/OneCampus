@@ -319,9 +319,16 @@ export function ReportForm({ kind, onDone }) {
       setTimeout(() => onDone?.(), 1200);
     } catch (err) {
       const msg = (err && err.message) || "";
-      if (msg === "UNAUTHORIZED" || msg.toLowerCase().includes("401") || msg.toLowerCase().includes("unauthorized")) {
-        setError("Session expired — please sign in again.");
-        setTimeout(() => nav({ to: "/login" }), 1000);
+      if (
+        msg === "UNAUTHORIZED" ||
+        msg === "FORBIDDEN" ||
+        msg.toLowerCase().includes("401") ||
+        msg.toLowerCase().includes("403") ||
+        msg.toLowerCase().includes("unauthorized") ||
+        msg.toLowerCase().includes("forbidden")
+      ) {
+        setError("Session expired or authentication required — redirecting to sign in...");
+        setTimeout(() => nav({ to: `/login?next=${encodeURIComponent(kind === "lost" ? "/lost-found/report-lost" : "/lost-found/report-found")}` }), 1200);
         return;
       }
       setError(err.message || "Unable to submit the report. Please try again.");
