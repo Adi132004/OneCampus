@@ -1,36 +1,39 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 /**
- * <img> wrapper that:
- *  1. Keeps the displayed image in sync with the `src` prop — including when
- *     the parent re-renders with a new URL after an async data fetch.
- *  2. Falls back to a deterministic picsum photo if the primary URL fails to
- *     load (broken link, CORS error, etc.).
- *
- * Bug fixed: the original implementation used useState(src) which only reads
- * the initial prop value. If the parent fetched items asynchronously and then
- * passed a real Cloudinary URL as src, the <img> would continue to show
- * whatever src was on the first render (null / undefined), causing every card
- * to show the "No image added" placeholder even when an image existed.
+ * <img> wrapper that falls back to a deterministic picsum photo if the
+ * primary URL fails to load or is empty. Synchronizes with prop updates
+ * so asynchronously loaded React Query image URLs render properly.
  */
 export function SmartImage({ src, fallbackSeed, alt = "", className, ...rest }) {
-  const [current, setCurrent] = useState(src);
+  const fallback = fallbackSeed
+    ? `https://picsum.photos/seed/${encodeURIComponent(fallbackSeed)}/800/600`
+    : "";
 
-  // Sync whenever the parent passes a new src URL (e.g. after async fetch)
+  const [imgSrc, setImgSrc] = useState(src || fallback);
+  const [failed, setFailed] = useState(false);
+
   useEffect(() => {
-    if (src) setCurrent(src);
-  }, [src]);
+    if (src) {
+      setImgSrc(src);
+      setFailed(false);
+    } else if (fallback) {
+      setImgSrc(fallback);
+    }
+  }, [src, fallback]);
 
   return (
     <img
       {...rest}
-      src={current}
+      src={imgSrc}
       alt={alt}
       loading="lazy"
       className={className}
       onError={() => {
-        const fb = `https://picsum.photos/seed/${encodeURIComponent(fallbackSeed)}/800/600`;
-        if (current !== fb) setCurrent(fb);
+        if (!failed && fallback && imgSrc !== fallback) {
+          setFailed(true);
+          setImgSrc(fallback);
+        }
       }}
     />
   );

@@ -35,33 +35,43 @@ public class MarketplaceService {
     }
 
     public List<MarketplaceItemDto> listForCampus(AuthenticatedUser authenticatedUser) {
-
         String campusId = authenticatedUser.campusId();
-
         return repository.findAllByCampusId(campusId)
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
+    public MarketplaceItemDto getById(
+            AuthenticatedUser authenticatedUser,
+            UUID itemId
+    ) {
+        MarketplaceItem item = repository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Marketplace item not found"));
+
+        if (!item.getCampusId().equals(authenticatedUser.campusId())) {
+            throw new IllegalArgumentException("Marketplace item not found");
+        }
+
+        return toDto(item);
+    }
+
     public MarketplaceItemDto create(
             AuthenticatedUser authenticatedUser,
             CreateMarketplaceItemRequest request
     ) {
-
         UserDto user = identityService.getCurrentUser(authenticatedUser);
-
         String finalImage = request.getImage();
 
         try {
-            if (finalImage != null && !finalImage.isBlank()) {
+            if (finalImage != null && !finalImage.isBlank() && !finalImage.contains("cloudinary.com")) {
                 String uploaded = cloudinaryService.uploadRemoteImage(finalImage);
-
                 if (uploaded != null && !uploaded.isBlank()) {
                     finalImage = uploaded;
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         MarketplaceItem item = new MarketplaceItem(
@@ -79,7 +89,8 @@ public class MarketplaceService {
                 ProductStatus.AVAILABLE
         );
 
-        return toDto(repository.save(item));
+        MarketplaceItem saved = repository.save(item);
+        return toDto(saved);
     }
 
     public MarketplaceItemDto createWithFile(
@@ -87,30 +98,21 @@ public class MarketplaceService {
             CreateMarketplaceItemRequest request,
             MultipartFile file
     ) {
-
         UserDto user = identityService.getCurrentUser(authenticatedUser);
-
         String finalImage = request.getImage();
 
         try {
-
             if (file != null && !file.isEmpty()) {
-
                 String uploaded = cloudinaryService.uploadFile(file);
-
                 if (uploaded != null && !uploaded.isBlank()) {
                     finalImage = uploaded;
                 }
-
-            } else if (finalImage != null && !finalImage.isBlank()) {
-
+            } else if (finalImage != null && !finalImage.isBlank() && !finalImage.contains("cloudinary.com")) {
                 String uploaded = cloudinaryService.uploadRemoteImage(finalImage);
-
                 if (uploaded != null && !uploaded.isBlank()) {
                     finalImage = uploaded;
                 }
             }
-
         } catch (Exception ignored) {
         }
 
@@ -137,13 +139,23 @@ public class MarketplaceService {
             UUID itemId,
             UpdateMarketplaceItemRequest request
     ) {
-
         MarketplaceItem item = repository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("Item not found"));
 
-        // Only the seller can update the product
         if (!item.getSellerId().equals(authenticatedUser.userId())) {
             throw new IllegalArgumentException("You can only modify your own listings.");
+        }
+
+        String finalImage = request.getImage();
+        try {
+            if (finalImage != null && !finalImage.isBlank() && !finalImage.contains("cloudinary.com")) {
+                String uploaded = cloudinaryService.uploadRemoteImage(finalImage);
+                if (uploaded != null && !uploaded.isBlank()) {
+                    finalImage = uploaded;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         item.setTitle(request.getTitle());
@@ -151,7 +163,7 @@ public class MarketplaceService {
         item.setPrice(request.getPrice());
         item.setCategory(request.getCategory());
         item.setCondition(request.getCondition());
-        item.setImage(request.getImage());
+        item.setImage(finalImage);
 
         return toDto(repository.save(item));
     }
@@ -160,11 +172,9 @@ public class MarketplaceService {
             AuthenticatedUser authenticatedUser,
             UUID itemId
     ) {
-
         MarketplaceItem item = repository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("Item not found"));
 
-        // Only the seller can delete the product
         if (!item.getSellerId().equals(authenticatedUser.userId())) {
             throw new IllegalArgumentException("You can only delete your own listings.");
         }
@@ -181,6 +191,7 @@ public class MarketplaceService {
                 item.getCategory(),
                 item.getCondition(),
                 item.getImage(),
+                item.getSellerId(),
                 item.getSellerName(),
                 item.getSellerEmail(),
                 item.getCollege(),

@@ -16,6 +16,7 @@ public class MarketplaceItemDto {
     private ProductCategory category;
     private ProductCondition condition;
     private String image;
+    private UUID sellerId;
     private String sellerName;
     private String sellerEmail;
     private String college;
@@ -33,6 +34,7 @@ public class MarketplaceItemDto {
             ProductCategory category,
             ProductCondition condition,
             String image,
+            UUID sellerId,
             String sellerName,
             String sellerEmail,
             String college,
@@ -46,6 +48,7 @@ public class MarketplaceItemDto {
         this.category = category;
         this.condition = condition;
         this.image = image;
+        this.sellerId = sellerId;
         this.sellerName = sellerName;
         this.sellerEmail = sellerEmail;
         this.college = college;
@@ -109,6 +112,13 @@ public class MarketplaceItemDto {
         this.image = image;
     }
 
+    public UUID getSellerId() {
+        return sellerId;
+    }
+
+    public void setSellerId(UUID sellerId) {
+        this.sellerId = sellerId;
+    }
     public String getSellerName() {
         return sellerName;
     }
