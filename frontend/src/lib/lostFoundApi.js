@@ -88,6 +88,23 @@ export async function updateLostFoundItem(itemId, payload) {
   return handleResponse(response);
 }
 
+export async function updateLostFoundItemWithFile(itemId, payload, file) {
+  const fd = new FormData();
+  fd.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+  if (file) fd.append("file", file, file.name);
+
+  const token = getAccessToken();
+
+  const response = await fetch(`${API_BASE_URL}/api/lost-found/${itemId}/upload`, {
+    method: "PUT",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: fd,
+  });
+  return handleResponse(response);
+}
+
 export async function deleteLostFoundItem(itemId) {
   const response = await fetch(`${API_BASE_URL}/api/lost-found/${itemId}`, {
     method: "DELETE",

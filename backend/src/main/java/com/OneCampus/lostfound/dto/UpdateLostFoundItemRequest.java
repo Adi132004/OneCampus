@@ -10,6 +10,8 @@ public record UpdateLostFoundItemRequest(
         @NotBlank(message = "Date is required") String date,
         @NotBlank(message = "Contact details are required") String contact,
         String emoji,
-        String category
+        String category,
+        String image,
+        Boolean removeImage
 ) {
 }

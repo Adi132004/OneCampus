@@ -116,6 +116,55 @@ public class LostFoundService {
         if (request.category() != null) {
             item.setCategory(request.category());
         }
+        if (Boolean.TRUE.equals(request.removeImage())) {
+            item.setImage(null);
+        } else if (request.image() != null) {
+            item.setImage(request.image());
+        }
+        return toDto(repository.save(item));
+    }
+
+    public LostFoundItemDto updateWithFile(
+            AuthenticatedUser authenticatedUser,
+            UUID itemId,
+            UpdateLostFoundItemRequest request,
+            org.springframework.web.multipart.MultipartFile file
+    ) {
+        LostFoundItem item = findItemForCampusOrThrow(itemId, authenticatedUser);
+        ensureOwnerOrThrow(item, authenticatedUser);
+
+        item.setName(request.name());
+        item.setDescription(request.description());
+        item.setStatus(request.status());
+        item.setLocation(request.location());
+        item.setDate(request.date());
+        item.setContact(request.contact());
+        item.setEmoji(request.emoji());
+        if (request.category() != null) {
+            item.setCategory(request.category());
+        }
+
+        if (file != null && !file.isEmpty()) {
+            try {
+                String uploaded = cloudinaryService.uploadFile(file);
+                if (uploaded != null && uploaded.startsWith("https://")) {
+                    item.setImage(uploaded);
+                } else {
+                    throw new RuntimeException("Image upload failed: Cloudinary did not return a valid URL.");
+                }
+            } catch (IllegalArgumentException e) {
+                throw e;
+            } catch (Exception e) {
+                System.err.println("[LostFoundService] Cloudinary update upload failed: " + e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException("Image upload failed: " + e.getMessage(), e);
+            }
+        } else if (Boolean.TRUE.equals(request.removeImage())) {
+            item.setImage(null);
+        } else if (request.image() != null) {
+            item.setImage(request.image());
+        }
+
         return toDto(repository.save(item));
     }
 
