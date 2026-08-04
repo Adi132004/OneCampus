@@ -49,7 +49,23 @@ public class MarketplaceService {
             CreateMarketplaceItemRequest request
     ) {
 
+        System.out.println("========== CREATE MARKETPLACE ==========");
+        System.out.println("Authenticated User : " + authenticatedUser);
+
+        if (authenticatedUser != null) {
+            System.out.println("User ID : " + authenticatedUser.userId());
+            System.out.println("Campus ID : " + authenticatedUser.campusId());
+        }
+
+        System.out.println("Title : " + request.getTitle());
+        System.out.println("Category : " + request.getCategory());
+        System.out.println("Condition : " + request.getCondition());
+        System.out.println("Price : " + request.getPrice());
+
         UserDto user = identityService.getCurrentUser(authenticatedUser);
+
+        System.out.println("Identity User : " + user.name());
+        System.out.println("Identity Email : " + user.email());
 
         String finalImage = request.getImage();
 
@@ -61,7 +77,8 @@ public class MarketplaceService {
                     finalImage = uploaded;
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         MarketplaceItem item = new MarketplaceItem(
@@ -79,7 +96,12 @@ public class MarketplaceService {
                 ProductStatus.AVAILABLE
         );
 
-        return toDto(repository.save(item));
+        MarketplaceItem saved = repository.save(item);
+
+        System.out.println("Marketplace item saved successfully.");
+        System.out.println("=======================================");
+
+        return toDto(saved);
     }
 
     public MarketplaceItemDto createWithFile(

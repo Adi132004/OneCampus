@@ -38,13 +38,50 @@ public class MarketplaceController {
         );
     }
 
+//    @PostMapping
+//    public ResponseEntity<MarketplaceItemDto> create(
+//            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+//            @Valid @RequestBody CreateMarketplaceItemRequest request
+//    ) {
+//        if (authenticatedUser == null) {
+//            return ResponseEntity.status(401).build();
+//        }
+//
+//        return ResponseEntity.ok(
+//                marketplaceService.create(authenticatedUser, request)
+//        );
+//    }
+
+//    @PostMapping
+//    public ResponseEntity<?> create(
+//            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+//            @Valid @RequestBody CreateMarketplaceItemRequest request
+//    ) {
+//
+//        System.out.println("========== MARKETPLACE ==========");
+//        System.out.println("User = " + authenticatedUser);
+//
+//        if (authenticatedUser == null) {
+//            System.out.println("AUTH USER IS NULL");
+//            return ResponseEntity.status(401).body("USER NULL");
+//        }
+//
+//        return ResponseEntity.ok(
+//                marketplaceService.create(authenticatedUser, request)
+//        );
+//    }
+
     @PostMapping
-    public ResponseEntity<MarketplaceItemDto> create(
+    public ResponseEntity<?> create(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
             @Valid @RequestBody CreateMarketplaceItemRequest request
     ) {
+
+        System.out.println("===== CONTROLLER HIT =====");
+        System.out.println("Authenticated User = " + authenticatedUser);
+
         if (authenticatedUser == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401).body("AUTH USER NULL");
         }
 
         return ResponseEntity.ok(
