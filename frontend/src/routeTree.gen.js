@@ -1,5 +1,3 @@
- 
-
 // @ts-nocheck
 
 // noinspection JSUnusedGlobalSymbols
@@ -18,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as LostFoundIndexRouteImport } from './routes/lost-found.index'
 import { Route as MarketplaceSellRouteImport } from './routes/marketplace.sell'
+import { Route as MarketplaceEditIdRouteImport } from './routes/marketplace.edit.$id'
 import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as LostFoundReportLostRouteImport } from './routes/lost-found.report-lost'
 import { Route as LostFoundReportFoundRouteImport } from './routes/lost-found.report-found'
@@ -67,6 +66,11 @@ const MarketplaceSellRoute = MarketplaceSellRouteImport.update({
   path: '/marketplace/sell',
   getParentRoute: () => rootRouteImport,
 })
+const MarketplaceEditIdRoute = MarketplaceEditIdRouteImport.update({
+  id: '/marketplace/edit/$id',
+  path: '/marketplace/edit/$id',
+  getParentRoute: () => rootRouteImport,
+})
 const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
   id: '/marketplace/$id',
   path: '/marketplace/$id',
@@ -93,6 +97,7 @@ const rootRouteChildren = {
   LostFoundReportFoundRoute: LostFoundReportFoundRoute,
   LostFoundReportLostRoute: LostFoundReportLostRoute,
   MarketplaceIdRoute: MarketplaceIdRoute,
+  MarketplaceEditIdRoute: MarketplaceEditIdRoute,
   MarketplaceSellRoute: MarketplaceSellRoute,
   LostFoundIndexRoute: LostFoundIndexRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,

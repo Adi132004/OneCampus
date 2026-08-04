@@ -12,9 +12,9 @@ import { getMarketplaceItems } from "@/services/marketplace";
 export function MarketplacePage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
-  const [maxPrice, setMaxPrice] = useState(10000);
+  const [maxPrice, setMaxPrice] = useState(50000);
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading, isError } = useQuery({
     queryKey: ["marketplace"],
     queryFn: getMarketplaceItems,
   });
@@ -35,8 +35,26 @@ export function MarketplacePage() {
       <PageShell
         eyebrow="Marketplace"
         title="Buy & sell on your campus"
-        subtitle="Loading marketplace..."
-      />
+        subtitle="Loading marketplace items..."
+      >
+        <div className="py-20 text-center text-lg font-medium text-muted-foreground">
+          Loading listings...
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageShell
+        eyebrow="Marketplace"
+        title="Buy & sell on your campus"
+        subtitle="Something went wrong"
+      >
+        <div className="py-20 text-center text-lg font-medium text-destructive">
+          Failed to load marketplace listings. Please try again later.
+        </div>
+      </PageShell>
     );
   }
 
@@ -60,7 +78,7 @@ export function MarketplacePage() {
 
         <Link
           to="/marketplace/sell"
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
           style={{
             boxShadow: "0 6px 16px rgba(232,89,12,0.25)",
           }}
@@ -90,29 +108,33 @@ export function MarketplacePage() {
         <div className="ml-auto flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2 text-xs text-muted-foreground">
           <SlidersHorizontal className="h-3.5 w-3.5" />
 
-          <span>Max price: ₹{maxPrice}</span>
+          <span>Max price: ₹{maxPrice.toLocaleString("en-IN")}</span>
 
           <input
             type="range"
             min={100}
-            max={10000}
-            step={100}
+            max={50000}
+            step={500}
             value={maxPrice}
             onChange={(e) => setMaxPrice(Number(e.target.value))}
-            className="accent-primary"
+            className="accent-primary cursor-pointer"
           />
         </div>
       </div>
 
-      <h2 className="mb-4 font-display text-xl font-semibold text-foreground">
-        Featured
-      </h2>
+      {featured.length > 0 && (
+        <>
+          <h2 className="mb-4 font-display text-xl font-semibold text-foreground">
+            Featured
+          </h2>
 
-      <div className="mb-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {featured.map((p) => (
-          <ProductCard key={p.id} p={p} />
-        ))}
-      </div>
+          <div className="mb-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((p) => (
+              <ProductCard key={p.id} p={p} />
+            ))}
+          </div>
+        </>
+      )}
 
       <h2 className="mb-4 font-display text-xl font-semibold text-foreground">
         Recent listings
@@ -162,17 +184,17 @@ export function ProductCard({ p }) {
             {p.title}
           </h3>
 
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-            ₹{p.price}
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary shrink-0">
+            ₹{Number(p.price).toLocaleString("en-IN")}
           </span>
         </div>
 
-        <p className="mt-1 text-xs text-muted-foreground">
-          {p.sellerName} • {p.college}
+        <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+          {p.sellerName}{p.college ? ` • ${p.college}` : ""}
         </p>
 
         <p className="mt-3 text-[11px] uppercase tracking-wider text-muted-foreground font-mono">
-          {new Date(p.createdAt).toLocaleDateString()}
+          {new Date(p.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
         </p>
       </div>
     </Link>

@@ -81,23 +81,23 @@ export const Route = createRootRouteWithContext()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "Lovable App",
+        title: "oneCampus",
       },
       {
         name: "description",
-        content: "Lovable Generated Project",
+        content: "Connect, Share, and Discover on your Campus.",
       },
       {
         name: "author",
-        content: "Lovable",
+        content: "oneCampus",
       },
       {
         property: "og:title",
-        content: "Lovable App",
+        content: "oneCampus",
       },
       {
         property: "og:description",
-        content: "Lovable Generated Project",
+        content: "Connect, Share, and Discover on your Campus.",
       },
       {
         property: "og:type",
@@ -109,7 +109,7 @@ export const Route = createRootRouteWithContext()({
       },
       {
         name: "twitter:site",
-        content: "@Lovable",
+        content: "@oneCampus",
       },
     ],
     links: [

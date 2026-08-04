@@ -9,5 +9,6 @@ export const Route = createFileRoute("/marketplace/sell")({
       },
     ],
   }),
+
   component: MarketplaceSellPage,
 });

@@ -38,6 +38,21 @@ public class MarketplaceController {
         );
     }
 
+    @GetMapping("/{itemId}")
+    public ResponseEntity<MarketplaceItemDto> getById(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @PathVariable UUID itemId
+    ) {
+
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok(
+                marketplaceService.getById(authenticatedUser, itemId)
+        );
+    }
+
 //    @PostMapping
 //    public ResponseEntity<MarketplaceItemDto> create(
 //            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,

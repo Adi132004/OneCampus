@@ -10,33 +10,193 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as ChatRouteImport } from './routes/chat'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LostFoundIndexRouteImport } from './routes/lost-found.index'
+import { Route as LostFoundReportFoundRouteImport } from './routes/lost-found.report-found'
+import { Route as LostFoundReportLostRouteImport } from './routes/lost-found.report-lost'
+import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
+import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
+import { Route as MarketplaceSellRouteImport } from './routes/marketplace.sell'
+import { Route as MarketplaceEditIdRouteImport } from './routes/marketplace.edit.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LostFoundIndexRoute = LostFoundIndexRouteImport.update({
+  id: '/lost-found/',
+  path: '/lost-found/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LostFoundReportFoundRoute = LostFoundReportFoundRouteImport.update({
+  id: '/lost-found/report-found',
+  path: '/lost-found/report-found',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LostFoundReportLostRoute = LostFoundReportLostRouteImport.update({
+  id: '/lost-found/report-lost',
+  path: '/lost-found/report-lost',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
+  id: '/marketplace/',
+  path: '/marketplace/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
+  id: '/marketplace/$id',
+  path: '/marketplace/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceSellRoute = MarketplaceSellRouteImport.update({
+  id: '/marketplace/sell',
+  path: '/marketplace/sell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceEditIdRoute = MarketplaceEditIdRouteImport.update({
+  id: '/marketplace/edit/$id',
+  path: '/marketplace/edit/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/lost-found/report-found': typeof LostFoundReportFoundRoute
+  '/lost-found/report-lost': typeof LostFoundReportLostRoute
+  '/marketplace/$id': typeof MarketplaceIdRoute
+  '/marketplace/sell': typeof MarketplaceSellRoute
+  '/lost-found/': typeof LostFoundIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
+  '/marketplace/edit/$id': typeof MarketplaceEditIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/lost-found/report-found': typeof LostFoundReportFoundRoute
+  '/lost-found/report-lost': typeof LostFoundReportLostRoute
+  '/marketplace/$id': typeof MarketplaceIdRoute
+  '/marketplace/sell': typeof MarketplaceSellRoute
+  '/lost-found': typeof LostFoundIndexRoute
+  '/marketplace': typeof MarketplaceIndexRoute
+  '/marketplace/edit/$id': typeof MarketplaceEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/chat': typeof ChatRoute
+  '/contact': typeof ContactRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/lost-found/report-found': typeof LostFoundReportFoundRoute
+  '/lost-found/report-lost': typeof LostFoundReportLostRoute
+  '/marketplace/$id': typeof MarketplaceIdRoute
+  '/marketplace/sell': typeof MarketplaceSellRoute
+  '/lost-found/': typeof LostFoundIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
+  '/marketplace/edit/$id': typeof MarketplaceEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/chat'
+    | '/contact'
+    | '/login'
+    | '/signup'
+    | '/lost-found/report-found'
+    | '/lost-found/report-lost'
+    | '/marketplace/$id'
+    | '/marketplace/sell'
+    | '/lost-found/'
+    | '/marketplace/'
+    | '/marketplace/edit/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/chat'
+    | '/contact'
+    | '/login'
+    | '/signup'
+    | '/lost-found/report-found'
+    | '/lost-found/report-lost'
+    | '/marketplace/$id'
+    | '/marketplace/sell'
+    | '/lost-found'
+    | '/marketplace'
+    | '/marketplace/edit/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/chat'
+    | '/contact'
+    | '/login'
+    | '/signup'
+    | '/lost-found/report-found'
+    | '/lost-found/report-lost'
+    | '/marketplace/$id'
+    | '/marketplace/sell'
+    | '/lost-found/'
+    | '/marketplace/'
+    | '/marketplace/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  ChatRoute: typeof ChatRoute
+  ContactRoute: typeof ContactRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
+  LostFoundReportFoundRoute: typeof LostFoundReportFoundRoute
+  LostFoundReportLostRoute: typeof LostFoundReportLostRoute
+  MarketplaceIdRoute: typeof MarketplaceIdRoute
+  MarketplaceSellRoute: typeof MarketplaceSellRoute
+  LostFoundIndexRoute: typeof LostFoundIndexRoute
+  MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+  MarketplaceEditIdRoute: typeof MarketplaceEditIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +208,108 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lost-found/': {
+      id: '/lost-found/'
+      path: '/lost-found'
+      fullPath: '/lost-found/'
+      preLoaderRoute: typeof LostFoundIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lost-found/report-found': {
+      id: '/lost-found/report-found'
+      path: '/lost-found/report-found'
+      fullPath: '/lost-found/report-found'
+      preLoaderRoute: typeof LostFoundReportFoundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lost-found/report-lost': {
+      id: '/lost-found/report-lost'
+      path: '/lost-found/report-lost'
+      fullPath: '/lost-found/report-lost'
+      preLoaderRoute: typeof LostFoundReportLostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/': {
+      id: '/marketplace/'
+      path: '/marketplace'
+      fullPath: '/marketplace/'
+      preLoaderRoute: typeof MarketplaceIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/$id': {
+      id: '/marketplace/$id'
+      path: '/marketplace/$id'
+      fullPath: '/marketplace/$id'
+      preLoaderRoute: typeof MarketplaceIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/sell': {
+      id: '/marketplace/sell'
+      path: '/marketplace/sell'
+      fullPath: '/marketplace/sell'
+      preLoaderRoute: typeof MarketplaceSellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/edit/$id': {
+      id: '/marketplace/edit/$id'
+      path: '/marketplace/edit/$id'
+      fullPath: '/marketplace/edit/$id'
+      preLoaderRoute: typeof MarketplaceEditIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  ChatRoute: ChatRoute,
+  ContactRoute: ContactRoute,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
+  LostFoundReportFoundRoute: LostFoundReportFoundRoute,
+  LostFoundReportLostRoute: LostFoundReportLostRoute,
+  MarketplaceIdRoute: MarketplaceIdRoute,
+  MarketplaceSellRoute: MarketplaceSellRoute,
+  LostFoundIndexRoute: LostFoundIndexRoute,
+  MarketplaceIndexRoute: MarketplaceIndexRoute,
+  MarketplaceEditIdRoute: MarketplaceEditIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
