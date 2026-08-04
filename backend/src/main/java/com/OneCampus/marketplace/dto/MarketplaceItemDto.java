@@ -1,5 +1,6 @@
 package com.OneCampus.marketplace.dto;
 
+import com.OneCampus.marketplace.entity.ProductCategory;
 import com.OneCampus.marketplace.entity.ProductCondition;
 import com.OneCampus.marketplace.entity.ProductStatus;
 
@@ -12,7 +13,7 @@ public class MarketplaceItemDto {
     private String title;
     private String description;
     private Double price;
-    private String category;
+    private ProductCategory category;
     private ProductCondition condition;
     private String image;
     private String sellerName;
@@ -29,7 +30,7 @@ public class MarketplaceItemDto {
             String title,
             String description,
             Double price,
-            String category,
+            ProductCategory category,
             ProductCondition condition,
             String image,
             String sellerName,
@@ -84,11 +85,11 @@ public class MarketplaceItemDto {
         this.price = price;
     }
 
-    public String getCategory() {
+    public ProductCategory getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(ProductCategory category) {
         this.category = category;
     }
 

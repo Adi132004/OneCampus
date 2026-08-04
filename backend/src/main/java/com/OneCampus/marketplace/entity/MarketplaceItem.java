@@ -1,14 +1,6 @@
 package com.OneCampus.marketplace.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
+import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -30,11 +22,12 @@ public class MarketplaceItem {
     @Column(name = "price", nullable = false)
     private Double price;
 
-    @Column(name = "category")
-    private String category;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false)
+    private ProductCategory category;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "condition", nullable = false, length = 20)
+    @Column(name = "condition", nullable = false)
     private ProductCondition condition;
 
     @Column(name = "image")
@@ -56,7 +49,7 @@ public class MarketplaceItem {
     private String college;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false)
     private ProductStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -65,9 +58,20 @@ public class MarketplaceItem {
     protected MarketplaceItem() {
     }
 
-    public MarketplaceItem(String title, String description, Double price, String category,
-                           ProductCondition condition, String image, UUID sellerId, String sellerName,
-                           String sellerEmail, String campusId, String college, ProductStatus status) {
+    public MarketplaceItem(
+            String title,
+            String description,
+            Double price,
+            ProductCategory category,
+            ProductCondition condition,
+            String image,
+            UUID sellerId,
+            String sellerName,
+            String sellerEmail,
+            String campusId,
+            String college,
+            ProductStatus status
+    ) {
         this.title = title;
         this.description = description;
         this.price = price;
@@ -115,11 +119,11 @@ public class MarketplaceItem {
         this.price = price;
     }
 
-    public String getCategory() {
+    public ProductCategory getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(ProductCategory category) {
         this.category = category;
     }
 

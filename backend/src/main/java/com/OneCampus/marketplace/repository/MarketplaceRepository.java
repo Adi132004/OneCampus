@@ -1,6 +1,7 @@
 package com.OneCampus.marketplace.repository;
 
 import com.OneCampus.marketplace.entity.MarketplaceItem;
+import com.OneCampus.marketplace.entity.ProductCategory;
 import com.OneCampus.marketplace.entity.ProductStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,7 +10,7 @@ import java.util.UUID;
 
 public interface MarketplaceRepository extends JpaRepository<MarketplaceItem, UUID> {
 
-    List<MarketplaceItem> findByCategory(String category);
+    List<MarketplaceItem> findByCategory(ProductCategory category);
 
     List<MarketplaceItem> findByCollege(String college);
 

@@ -2,17 +2,17 @@ package com.OneCampus.marketplace.dto;
 
 import com.OneCampus.marketplace.entity.ProductCategory;
 import com.OneCampus.marketplace.entity.ProductCondition;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.NotBlank;
 
-public class CreateMarketplaceItemRequest {
+public class UpdateMarketplaceItemRequest {
 
     @NotBlank(message = "Title is required")
     private String title;
 
-    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
+    @Size(max = 1000)
     private String description;
 
     @NotNull(message = "Price is required")
@@ -27,10 +27,10 @@ public class CreateMarketplaceItemRequest {
 
     private String image;
 
-    protected CreateMarketplaceItemRequest() {
+    protected UpdateMarketplaceItemRequest() {
     }
 
-    public CreateMarketplaceItemRequest(
+    public UpdateMarketplaceItemRequest(
             String title,
             String description,
             Double price,
