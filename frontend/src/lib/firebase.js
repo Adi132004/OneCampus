@@ -1,4 +1,5 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+import { API_BASE_URL } from "@/config/api";
+export { API_BASE_URL };
 const AUTH_STORAGE_KEY = "onecampus-auth-user";
 const ACCESS_TOKEN_STORAGE_KEY = "onecampus-access-token";
 const REFRESH_TOKEN_STORAGE_KEY = "onecampus-refresh-token";
