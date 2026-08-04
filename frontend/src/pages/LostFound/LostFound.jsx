@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Edit3, MessageCircle, Plus, Search, Trash2, X } from "lucide-react";
+import { Edit3, MessageCircle, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { SmartImage } from "@/components/SmartImage";
-import { deleteLostFoundItem, fetchLostFoundItems, updateLostFoundItem } from "@/lib/lostFoundApi";
+import { deleteLostFoundItem, fetchLostFoundItems, updateLostFoundItem, repostLostFoundItem } from "@/lib/lostFoundApi";
 import { getCurrentAuthUser, subscribeToAuth, API_BASE_URL } from "@/lib/firebase";
 import { formatLostItemDate } from "@/lib/mock-data";
 
@@ -17,6 +17,7 @@ export function LostFoundPage() {
   const [draft, setDraft] = useState({ name: "", description: "", location: "", date: "", contact: "", category: "" });
   const [chattingWith, setChattingWith] = useState(null);
   const [chatLoading, setChatLoading] = useState(false);
+  const [repostingId, setRepostingId] = useState(null);
 
   useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
 
@@ -36,17 +37,29 @@ export function LostFoundPage() {
 
   const currentUser = getCurrentAuthUser();
 
+  /**
+   * Returns true if the logged-in user owns this item.
+   */
+  function canManage(item) {
+    if (!currentUser?.uid) return false;
+    return String(item.ownerId) === String(currentUser.uid);
+  }
+
   const visibleItems = useMemo(() => {
-    const filtered = items.filter(
-      (i) => (tab === "All" || i.status === tab) && i.name.toLowerCase().includes(q.toLowerCase()),
-    );
+    const filtered = items.filter((i) => {
+      const matchesQuery = i.name.toLowerCase().includes(q.toLowerCase());
+      if (!matchesQuery) return false;
+      if (tab === "All") return true;
+      if (tab === "My Posts") return canManage(i);
+      return i.status === tab;
+    });
 
     return filtered.sort((a, b) => {
       const aDate = new Date(a.date || 0).getTime();
       const bDate = new Date(b.date || 0).getTime();
       return bDate - aDate;
     });
-  }, [items, q, tab]);
+  }, [items, q, tab, currentUser?.uid]);
 
   async function handleDelete(itemId) {
     try {
@@ -131,6 +144,30 @@ export function LostFoundPage() {
     return String(item.ownerId) === String(currentUser.uid);
   }
 
+  async function handleRepost(item, targetStatus) {
+    const statusToUse = targetStatus || item.status || "Lost";
+    setRepostingId(item.id);
+    try {
+      const updated = await repostLostFoundItem(item.id, statusToUse);
+      setItems((current) =>
+        current.map((i) => (i.id === item.id ? { ...i, ...updated } : i)),
+      );
+    } catch (err) {
+      const msg = err?.message || "";
+      if (msg === "UNAUTHORIZED") {
+        window.location.href = `/login?next=${encodeURIComponent("/lost-found")}`;
+        return;
+      }
+      if (msg === "FORBIDDEN") {
+        window.alert("You do not have permission to repost this item.");
+        return;
+      }
+      window.alert(err.message || "Unable to repost item. Please try again.");
+    } finally {
+      setRepostingId(null);
+    }
+  }
+
   async function startChat(item) {
     if (!isSignedIn) {
       window.location.href = `/login?next=${encodeURIComponent("/lost-found")}`;
@@ -197,7 +234,7 @@ export function LostFoundPage() {
       </div>
 
       <div className="mb-8 flex gap-2">
-        {["All", "Lost", "Found"].map((t) => (
+        {["All", "Lost", "Found", "My Posts"].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -276,7 +313,20 @@ export function LostFoundPage() {
                 ) : null}
               </div>
               {canManage(i) ? (
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRepost(i, i.status === "Found" ? "Found" : "Lost")}
+                    disabled={repostingId === i.id}
+                    className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${repostingId === i.id ? "animate-spin" : ""}`} />
+                    {repostingId === i.id
+                      ? "Reposting..."
+                      : i.status === "Found"
+                      ? "Repost Found"
+                      : "Repost Lost"}
+                  </button>
                   <button type="button" onClick={() => startEdit(i)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
                     <Edit3 className="h-3.5 w-3.5" /> Edit
                   </button>

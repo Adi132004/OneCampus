@@ -109,3 +109,12 @@ export async function deleteLostFoundItem(itemId) {
     }
   }
 }
+
+export async function repostLostFoundItem(itemId, targetStatus) {
+  const query = targetStatus ? `?status=${encodeURIComponent(targetStatus)}` : "";
+  const response = await fetch(`${API_BASE_URL}/api/lost-found/${itemId}/repost${query}`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse(response);
+}

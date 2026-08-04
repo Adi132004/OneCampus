@@ -142,4 +142,19 @@ public class LostFoundController {
         lostFoundService.delete(authenticatedUser, itemId);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Reposts a lost-found item by updating its date to today and reactivating its status.
+     */
+    @RequestMapping(value = "/{itemId}/repost", method = {RequestMethod.POST, RequestMethod.PUT})
+    public ResponseEntity<LostFoundItemDto> repost(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @PathVariable UUID itemId,
+            @RequestParam(value = "status", required = false) String status
+    ) {
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(lostFoundService.repost(authenticatedUser, itemId, status));
+    }
 }

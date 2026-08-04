@@ -125,6 +125,20 @@ public class LostFoundService {
         repository.delete(item);
     }
 
+    public LostFoundItemDto repost(AuthenticatedUser authenticatedUser, UUID itemId, String targetStatus) {
+        LostFoundItem item = findItemForCampusOrThrow(itemId, authenticatedUser);
+        ensureOwnerOrThrow(item, authenticatedUser);
+
+        item.setDate(java.time.LocalDate.now().toString());
+        if (targetStatus != null && !targetStatus.isBlank()) {
+            item.setStatus(targetStatus);
+        } else if (item.getStatus() == null || item.getStatus().isBlank()) {
+            item.setStatus("Lost");
+        }
+
+        return toDto(repository.save(item));
+    }
+
     /**
      * Returns a single item by ID only if it belongs to the authenticated user's campus.
      * Throws 404 if not found, 403 if the item belongs to a different campus.
