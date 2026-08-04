@@ -10,7 +10,10 @@ public class CloudinaryProperties {
     private String apiSecret;
 
     public String getCloudName() {
-        return cloudName;
+        if (cloudName == null || cloudName.isBlank() || "Root".equalsIgnoreCase(cloudName.trim())) {
+            return "qezpl0vj";
+        }
+        return cloudName.trim();
     }
 
     public void setCloudName(String cloudName) {
@@ -18,7 +21,10 @@ public class CloudinaryProperties {
     }
 
     public String getApiKey() {
-        return apiKey;
+        if (apiKey == null || apiKey.isBlank() || "Root".equalsIgnoreCase(apiKey.trim())) {
+            return "569391245154818";
+        }
+        return apiKey.trim();
     }
 
     public void setApiKey(String apiKey) {
@@ -26,7 +32,10 @@ public class CloudinaryProperties {
     }
 
     public String getApiSecret() {
-        return apiSecret;
+        if (apiSecret == null || apiSecret.isBlank() || "Root".equalsIgnoreCase(apiSecret.trim())) {
+            return "FRn6xR2PreKe6_v8Su_6aeBgh68";
+        }
+        return apiSecret.trim();
     }
 
     public void setApiSecret(String apiSecret) {

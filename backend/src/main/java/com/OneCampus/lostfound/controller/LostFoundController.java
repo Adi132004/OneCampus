@@ -84,12 +84,13 @@ public class LostFoundController {
             LostFoundItemDto dto = lostFoundService.createWithFile(authenticatedUser, request, file);
             return ResponseEntity.ok(dto);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, e.getMessage(), e);
         } catch (Exception e) {
-            // log and return 500 with a simple message
             System.err.println("Error uploading lost/found item: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(500).body(null);
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Image upload failed: " + e.getMessage(), e);
         }
     }
 
@@ -118,6 +119,42 @@ public class LostFoundController {
     }
 
     /**
+     * Updates a lost-found item with an optional new image file.
+     *
+     * Called by the frontend when the user edits an item and selects a new image.
+     * The JSON payload is sent as a multipart part named "data", and the file as "file".
+     *
+     * <ul>
+     *   <li>403 Forbidden – if the authenticated user is not the item's owner</li>
+     *   <li>403 Forbidden – if the item belongs to a different campus</li>
+     *   <li>404 Not Found – if the item does not exist</li>
+     * </ul>
+     */
+    @PutMapping(path = "/{itemId}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<LostFoundItemDto> updateWithFile(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @PathVariable UUID itemId,
+            @RequestPart("data") @Valid UpdateLostFoundItemRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        try {
+            LostFoundItemDto dto = lostFoundService.updateWithFile(authenticatedUser, itemId, request, file);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalArgumentException e) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        } catch (Exception e) {
+            System.err.println("Error updating lost/found item with file: " + e.getMessage());
+            e.printStackTrace();
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Image upload failed: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Deletes a lost-found item.
      *
      * <ul>
@@ -140,5 +177,20 @@ public class LostFoundController {
         }
         lostFoundService.delete(authenticatedUser, itemId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Reposts a lost-found item by updating its date to today and reactivating its status.
+     */
+    @RequestMapping(value = "/{itemId}/repost", method = {RequestMethod.POST, RequestMethod.PUT})
+    public ResponseEntity<LostFoundItemDto> repost(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @PathVariable UUID itemId,
+            @RequestParam(value = "status", required = false) String status
+    ) {
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(lostFoundService.repost(authenticatedUser, itemId, status));
     }
 }

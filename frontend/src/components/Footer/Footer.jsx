@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Github, Instagram, Linkedin, Mail, Twitter } from "lucide-react";
 export function Footer() {
   return (
-    <footer className="relative z-10 px-4 pb-6">
+    <footer className="px-4 pb-6">
       <div className="glass-card-strong mx-auto max-w-7xl overflow-hidden rounded-[2rem]">
         <div className="grid gap-10 px-6 py-12 md:grid-cols-4 md:px-10">
           <div>

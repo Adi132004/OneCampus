@@ -1,11 +1,212 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, ChevronDown, Check } from "lucide-react";
 import { PageShell } from "../PageShell";
 import { createLostFoundItemWithFile } from "@/lib/lostFoundApi";
 import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+
+const CATEGORIES = [
+  "Electronics",
+  "Documents & IDs",
+  "Wallets & Money",
+  "Bags & Luggage",
+  "Keys",
+  "Clothing & Accessories",
+  "Jewellery",
+  "Books & Stationery",
+  "Sports Equipment",
+  "Vehicles & Vehicle Accessories",
+  "Gadgets & Accessories",
+  "Personal Items",
+  "Medical Items",
+  "Food & Water Containers",
+  "Miscellaneous",
+  "Other",
+];
+
+// ─── CategoryDropdown ─────────────────────────────────────────────────────
+// ROOT CAUSE OF THE BUG: The old panel used position:absolute inside the form
+// card. Any ancestor with overflow:hidden, a CSS transform, or an opacity
+// transition creates a new stacking context that clips or buries the panel
+// regardless of z-index. The only reliable fix is a React Portal — the panel
+// is rendered directly on <body>, completely outside the form DOM tree.
+//
+// Position is calculated live from getBoundingClientRect() and auto-flips
+// upward when there is not enough viewport space below the trigger.
+function CategoryDropdown({ value, onChange, hasError }) {
+  const [open, setOpen] = useState(false);
+  const [panelStyle, setPanelStyle] = useState({});
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
+
+  // ── Position calculation ────────────────────────────────────────────────
+  // Called every time the panel opens and on every scroll/resize event while
+  // the panel is visible. Uses viewport-relative coords (fixed positioning)
+  // so page scroll does not affect placement.
+  function calcPosition() {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const GAP = 6; // px gap between trigger and panel
+
+    // Estimate panel height: 16 options × ~37px per row + 12px padding
+    const estimatedPanelHeight = CATEGORIES.length * 37 + 12;
+
+    const spaceBelow = viewportHeight - rect.bottom - GAP;
+    const spaceAbove = rect.top - GAP;
+    const openUpward = spaceBelow < estimatedPanelHeight && spaceAbove > spaceBelow;
+
+    setPanelStyle({
+      position: "fixed",
+      left: rect.left,
+      width: rect.width,
+      zIndex: 99999,
+      border: "1.5px solid var(--border)",
+      borderRadius: "16px",
+      background: "white",
+      boxShadow: "0 24px 80px rgba(0,0,0,0.18)",
+      padding: "6px",
+      // Open downward or upward depending on available space
+      ...(openUpward
+        ? { bottom: viewportHeight - rect.top + GAP }
+        : { top: rect.bottom + GAP }),
+    });
+  }
+
+  // Recalculate when the panel opens and keep it in sync during scroll/resize
+  useEffect(() => {
+    if (!open) return;
+    calcPosition();
+
+    window.addEventListener("scroll", calcPosition, true); // capture phase catches nested scrollers
+    window.addEventListener("resize", calcPosition);
+    return () => {
+      window.removeEventListener("scroll", calcPosition, true);
+      window.removeEventListener("resize", calcPosition);
+    };
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Outside-click closes the panel ────────────────────────────────────
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(e) {
+      const clickedTrigger = triggerRef.current?.contains(e.target);
+      const clickedPanel = panelRef.current?.contains(e.target);
+      if (!clickedTrigger && !clickedPanel) setOpen(false);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
+  // ── Keyboard navigation ────────────────────────────────────────────────
+  function handleTriggerKeyDown(e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((p) => !p); }
+    if (e.key === "Escape") setOpen(false);
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && !open) setOpen(true);
+  }
+
+  function select(cat) {
+    onChange(cat);
+    setOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  // ── Trigger class ──────────────────────────────────────────────────────
+  const triggerCls = [
+    "w-full flex items-center justify-between gap-2",
+    "rounded-2xl border px-4 py-2.5 text-sm cursor-pointer select-none",
+    "bg-white transition-all duration-150",
+    "focus:outline-none focus:ring-2 focus:ring-primary/30",
+    hasError && !value
+      ? "border-red-400"
+      : open
+      ? "border-primary ring-2 ring-primary/20"
+      : "border-border hover:border-primary/40",
+  ].join(" ");
+
+  // ── Portal panel ──────────────────────────────────────────────────────
+  const panel = (
+    <div
+      ref={panelRef}
+      role="listbox"
+      aria-label="Category options"
+      style={{
+        ...panelStyle,
+        background: "white",
+      }}
+    >
+      {CATEGORIES.map((cat) => {
+        const isSelected = value === cat;
+        return (
+          <div
+            key={cat}
+            role="option"
+            aria-selected={isSelected}
+            tabIndex={0}
+            onClick={() => select(cat)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(cat); }
+              if (e.key === "Escape") { setOpen(false); triggerRef.current?.focus(); }
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "8px 12px",
+              borderRadius: "10px",
+              fontSize: "14px",
+              cursor: "pointer",
+              fontWeight: isSelected ? 600 : 400,
+              color: isSelected ? "var(--primary)" : "var(--foreground)",
+              background: isSelected ? "rgba(255, 112, 31, 0.12)" : "white",
+              transition: "background 0.12s ease, color 0.12s ease",
+            }}
+            onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "#f5f5f5"; }}
+            onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "white"; }}
+          >
+            <span>{cat}</span>
+            {isSelected && (
+              <Check style={{ width: "14px", height: "14px", color: "var(--primary)", flexShrink: 0 }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div style={{ position: "relative" }}>
+      {/* Trigger — styled identically to every other Field input */}
+      <div
+        ref={triggerRef}
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Select category"
+        tabIndex={0}
+        className={triggerCls}
+        onClick={() => setOpen((p) => !p)}
+        onKeyDown={handleTriggerKeyDown}
+      >
+        <span className={value ? "text-foreground" : "text-muted-foreground"}>
+          {value || "Select a category"}
+        </span>
+        <ChevronDown
+          className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
+      </div>
+
+      {/* Portal: rendered on <body>, escaping all parent stacking contexts */}
+      {open && createPortal(panel, document.body)}
+    </div>
+  );
+}
+
+// ─── ReportForm ────────────────────────────────────────────────────────────
 
 export function ReportForm({ kind, onDone }) {
   const nav = useNavigate();
@@ -17,6 +218,8 @@ export function ReportForm({ kind, onDone }) {
     date: "",
     contact: "",
   });
+  const [category, setCategory] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [dragActive, setDragActive] = useState(false);
@@ -63,6 +266,14 @@ export function ReportForm({ kind, onDone }) {
     setError("");
   }
 
+  // Determine the final category string to submit
+  function getFinalCategory() {
+    if (category === "Other") {
+      return customCategory.trim() || "";
+    }
+    return category;
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -73,6 +284,16 @@ export function ReportForm({ kind, onDone }) {
 
     if (!formData.name.trim() || !formData.description.trim() || !formData.location.trim() || !formData.date || !formData.contact.trim()) {
       setError("Please fill in every required field before submitting.");
+      return;
+    }
+
+    if (!category) {
+      setError("Please select a category for the item.");
+      return;
+    }
+
+    if (category === "Other" && !customCategory.trim()) {
+      setError("Please describe the custom category in the text box.");
       return;
     }
 
@@ -90,6 +311,7 @@ export function ReportForm({ kind, onDone }) {
           date: formData.date,
           contact: formData.contact.trim(),
           emoji: kind === "lost" ? "🧳" : "✅",
+          category: getFinalCategory(),
         },
         file || null,
       );
@@ -97,9 +319,16 @@ export function ReportForm({ kind, onDone }) {
       setTimeout(() => onDone?.(), 1200);
     } catch (err) {
       const msg = (err && err.message) || "";
-      if (msg === "UNAUTHORIZED" || msg.toLowerCase().includes("401") || msg.toLowerCase().includes("unauthorized")) {
-        setError("Session expired — please sign in again.");
-        setTimeout(() => nav({ to: "/login" }), 1000);
+      if (
+        msg === "UNAUTHORIZED" ||
+        msg === "FORBIDDEN" ||
+        msg.toLowerCase().includes("401") ||
+        msg.toLowerCase().includes("403") ||
+        msg.toLowerCase().includes("unauthorized") ||
+        msg.toLowerCase().includes("forbidden")
+      ) {
+        setError("Session expired or authentication required — redirecting to sign in...");
+        setTimeout(() => nav({ to: `/login?next=${encodeURIComponent(kind === "lost" ? "/lost-found/report-lost" : "/lost-found/report-found")}` }), 1200);
         return;
       }
       setError(err.message || "Unable to submit the report. Please try again.");
@@ -109,13 +338,16 @@ export function ReportForm({ kind, onDone }) {
   }
 
   const label = kind === "lost" ? "Lost Item" : "Found Item";
-  const placeholderText = useMemo(() => ({
-    name: "Enter lost item name",
-    description: "Describe your lost item",
-    location: "Enter last seen location",
-    date: "Select date",
-    contact: "Enter phone number or email",
-  }), []);
+  const placeholderText = useMemo(
+    () => ({
+      name: kind === "lost" ? "e.g. iPhone 15, HP Laptop, Gold Ring…" : "e.g. Blue Backpack, Wallet, Keys…",
+      description: kind === "lost" ? "Describe your lost item in detail" : "Describe where and how you found it",
+      location: kind === "lost" ? "Last seen location" : "Where you found it",
+      date: "Select date",
+      contact: "Phone number or email",
+    }),
+    [kind],
+  );
 
   if (!isSignedIn) {
     return null;
@@ -128,6 +360,7 @@ export function ReportForm({ kind, onDone }) {
       subtitle="Share a clear description and optionally add a photo to help others recognize it."
     >
       <form className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]" onSubmit={handleSubmit}>
+        {/* ── Left: image upload ── */}
         <div
           role="button"
           tabIndex={0}
@@ -148,12 +381,16 @@ export function ReportForm({ kind, onDone }) {
             setDragActive(false);
             handleFileSelection(event.dataTransfer.files?.[0]);
           }}
-          className={`group flex min-h-[340px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[2rem] border border-dashed p-6 text-center transition-all duration-300 ${dragActive ? "border-primary bg-primary/10 shadow-lg" : "border-border bg-card hover:-translate-y-1 hover:shadow-lg"}`}
+          className={`group flex min-h-[340px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[2rem] border border-dashed p-6 text-center transition-all duration-300 ${
+            dragActive
+              ? "border-primary bg-white shadow-[0_24px_70px_-24px_rgba(37,99,235,0.45)]"
+              : "border-border bg-white hover:-translate-y-1 shadow-2xl"
+          }`}
         >
           {previewUrl ? (
             <div className="flex h-full w-full flex-col items-center justify-center gap-3">
               <img src={previewUrl} alt="Preview" className="max-h-[260px] w-full rounded-2xl object-contain shadow-sm" />
-              <p className="text-sm text-muted-foreground">Image ready to upload when you submit the report.</p>
+              <p className="text-sm text-muted-foreground">Image ready — will upload when you submit.</p>
             </div>
           ) : (
             <>
@@ -161,16 +398,23 @@ export function ReportForm({ kind, onDone }) {
                 <UploadCloud className="h-9 w-9" />
               </div>
               <h3 className="text-lg font-semibold text-foreground">Click to upload image</h3>
-              <p className="mt-2 text-sm text-muted-foreground">or Drag & Drop</p>
-              <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">JPG, JPEG, PNG, WEBP</p>
+              <p className="mt-2 text-sm text-muted-foreground">or Drag &amp; Drop</p>
+              <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">JPG · JPEG · PNG · WEBP</p>
             </>
           )}
         </div>
 
-        <div className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
+        {/* ── Right: form fields ── */}
+        <div className="rounded-[2rem] border border-border bg-white p-6 shadow-2xl shadow-slate-200/50">
           <div className="grid gap-4">
-            {error ? <p className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-            {successMessage ? <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{successMessage}</p> : null}
+            {error ? (
+              <p className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+            ) : null}
+            {successMessage ? (
+              <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{successMessage}</p>
+            ) : null}
+
+            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -178,13 +422,87 @@ export function ReportForm({ kind, onDone }) {
               className="hidden"
               onChange={(event) => handleFileSelection(event.target.files?.[0])}
             />
-            <Field label={`${label} name`} name="name" value={formData.name} onChange={handleChange} placeholder={placeholderText.name} />
-            <Field label="Description" name="description" value={formData.description} onChange={handleChange} textarea placeholder={placeholderText.description} />
-            <Field label={kind === "lost" ? "Last seen location" : "Found location"} name="location" value={formData.location} onChange={handleChange} placeholder={placeholderText.location} />
-            <Field label="Date" name="date" value={formData.date} onChange={handleChange} type="date" placeholder={placeholderText.date} />
-            <Field label="Contact details" name="contact" value={formData.contact} onChange={handleChange} placeholder={placeholderText.contact} />
-            <button type="submit" disabled={isSubmitting} className="mt-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70">
-              {isSubmitting ? "Submitting..." : "Submit report"}
+
+            <Field
+              label={`${label} name`}
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder={placeholderText.name}
+            />
+            <Field
+              label="Description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              textarea
+              placeholder={placeholderText.description}
+            />
+            <Field
+              label={kind === "lost" ? "Last seen location" : "Found location"}
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              placeholder={placeholderText.location}
+            />
+            <Field
+              label="Date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              type="date"
+              placeholder={placeholderText.date}
+            />
+            <Field
+              label="Contact details"
+              name="contact"
+              value={formData.contact}
+              onChange={handleChange}
+              placeholder={placeholderText.contact}
+            />
+
+            {/* ── Category dropdown ── */}
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-foreground">
+                Category <span className="text-red-500" aria-hidden="true">*</span>
+              </span>
+              <CategoryDropdown
+                value={category}
+                hasError={!!error && !category}
+                onChange={(val) => {
+                  setCategory(val);
+                  if (val !== "Other") setCustomCategory("");
+                  if (error) setError("");
+                }}
+              />
+            </label>
+
+            {/* ── "Other" custom input — appears only when Other is selected ── */}
+            {category === "Other" && (
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-foreground">
+                  Describe the category <span className="text-red-500" aria-hidden="true">*</span>
+                </span>
+                <input
+                  type="text"
+                  value={customCategory}
+                  onChange={(e) => {
+                    setCustomCategory(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder="e.g. Musical Instrument, Lab Equipment…"
+                  maxLength={60}
+                  className="w-full rounded-2xl border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </label>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isSubmitting ? "Submitting…" : "Submit report"}
             </button>
           </div>
         </div>
@@ -193,8 +511,10 @@ export function ReportForm({ kind, onDone }) {
   );
 }
 
+// ─── Field helper ─────────────────────────────────────────────────────────
 function Field({ label, type = "text", placeholder, textarea = false, name, value, onChange }) {
-  const cls = "w-full rounded-2xl border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30";
+  const cls =
+    "w-full rounded-2xl border border-border bg-[var(--surface-2)] px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30";
 
   return (
     <label className="block">

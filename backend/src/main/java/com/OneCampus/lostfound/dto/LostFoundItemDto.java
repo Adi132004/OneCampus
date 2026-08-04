@@ -14,6 +14,8 @@ public record LostFoundItemDto(
         String college,
         String emoji,
         String image,
+        String imageUrl,
+        String category,
         UUID ownerId,
         String ownerName,
         String ownerEmail,

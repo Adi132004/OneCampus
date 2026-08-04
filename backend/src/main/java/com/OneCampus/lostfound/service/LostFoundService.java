@@ -52,7 +52,8 @@ public class LostFoundService {
                 user.name(),
                 user.email(),
                 request.emoji(),
-                null
+                null,
+                request.category()
         );
         return toDto(repository.save(item));
     }
@@ -60,21 +61,27 @@ public class LostFoundService {
     public LostFoundItemDto createWithFile(AuthenticatedUser authenticatedUser, CreateLostFoundItemRequest request, org.springframework.web.multipart.MultipartFile file) {
         UserDto user = identityService.getCurrentUser(authenticatedUser);
         String finalImage = null;
-        try {
-            if (file != null && !file.isEmpty()) {
+
+        if (file != null && !file.isEmpty()) {
+            try {
                 String uploaded = cloudinaryService.uploadFile(file);
-                // Only accept a proper HTTPS Cloudinary URL — discard null, blank, or anything else.
+                // Cloudinary returned a valid HTTPS URL — use it
                 if (uploaded != null && uploaded.startsWith("https://")) {
                     finalImage = uploaded;
                 } else {
+                    // Should not happen after the hardened CloudinaryService, but guard anyway
                     System.err.println("[LostFoundService] Cloudinary returned an unexpected URL: " + uploaded);
+                    throw new RuntimeException("Image upload failed: Cloudinary did not return a valid URL.");
                 }
+            } catch (IllegalArgumentException e) {
+                // Validation error (wrong file type / size) — propagate so the client gets a 400
+                throw e;
+            } catch (Exception e) {
+                // Network / Cloudinary API error — log and propagate a 500 so the client knows
+                System.err.println("[LostFoundService] Cloudinary upload failed: " + e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException("Image upload failed: " + e.getMessage(), e);
             }
-        } catch (Exception e) {
-            // Log the real error so it is visible in the Spring Boot console.
-            // The item will be saved without an image rather than failing the entire request.
-            System.err.println("[LostFoundService] Cloudinary upload failed: " + e.getMessage());
-            e.printStackTrace();
         }
 
         LostFoundItem item = new LostFoundItem(
@@ -90,7 +97,8 @@ public class LostFoundService {
                 user.name(),
                 user.email(),
                 request.emoji(),
-                finalImage
+                finalImage,
+                request.category()
         );
         return toDto(repository.save(item));
     }
@@ -105,6 +113,58 @@ public class LostFoundService {
         item.setDate(request.date());
         item.setContact(request.contact());
         item.setEmoji(request.emoji());
+        if (request.category() != null) {
+            item.setCategory(request.category());
+        }
+        if (Boolean.TRUE.equals(request.removeImage())) {
+            item.setImage(null);
+        } else if (request.image() != null) {
+            item.setImage(request.image());
+        }
+        return toDto(repository.save(item));
+    }
+
+    public LostFoundItemDto updateWithFile(
+            AuthenticatedUser authenticatedUser,
+            UUID itemId,
+            UpdateLostFoundItemRequest request,
+            org.springframework.web.multipart.MultipartFile file
+    ) {
+        LostFoundItem item = findItemForCampusOrThrow(itemId, authenticatedUser);
+        ensureOwnerOrThrow(item, authenticatedUser);
+
+        item.setName(request.name());
+        item.setDescription(request.description());
+        item.setStatus(request.status());
+        item.setLocation(request.location());
+        item.setDate(request.date());
+        item.setContact(request.contact());
+        item.setEmoji(request.emoji());
+        if (request.category() != null) {
+            item.setCategory(request.category());
+        }
+
+        if (file != null && !file.isEmpty()) {
+            try {
+                String uploaded = cloudinaryService.uploadFile(file);
+                if (uploaded != null && uploaded.startsWith("https://")) {
+                    item.setImage(uploaded);
+                } else {
+                    throw new RuntimeException("Image upload failed: Cloudinary did not return a valid URL.");
+                }
+            } catch (IllegalArgumentException e) {
+                throw e;
+            } catch (Exception e) {
+                System.err.println("[LostFoundService] Cloudinary update upload failed: " + e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException("Image upload failed: " + e.getMessage(), e);
+            }
+        } else if (Boolean.TRUE.equals(request.removeImage())) {
+            item.setImage(null);
+        } else if (request.image() != null) {
+            item.setImage(request.image());
+        }
+
         return toDto(repository.save(item));
     }
 
@@ -112,6 +172,20 @@ public class LostFoundService {
         LostFoundItem item = findItemForCampusOrThrow(itemId, authenticatedUser);
         ensureOwnerOrThrow(item, authenticatedUser);
         repository.delete(item);
+    }
+
+    public LostFoundItemDto repost(AuthenticatedUser authenticatedUser, UUID itemId, String targetStatus) {
+        LostFoundItem item = findItemForCampusOrThrow(itemId, authenticatedUser);
+        ensureOwnerOrThrow(item, authenticatedUser);
+
+        item.setDate(java.time.LocalDate.now().toString());
+        if (targetStatus != null && !targetStatus.isBlank()) {
+            item.setStatus(targetStatus);
+        } else if (item.getStatus() == null || item.getStatus().isBlank()) {
+            item.setStatus("Lost");
+        }
+
+        return toDto(repository.save(item));
     }
 
     /**
@@ -146,6 +220,8 @@ public class LostFoundService {
                 item.getCollege(),
                 item.getEmoji(),
                 item.getImage(),
+                item.getImage(),
+                item.getCategory(),
                 item.getOwnerId(),
                 item.getOwnerName(),
                 item.getOwnerEmail(),

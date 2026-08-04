@@ -20,6 +20,8 @@ import { Route as MarketplaceEditIdRouteImport } from './routes/marketplace.edit
 import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as LostFoundReportLostRouteImport } from './routes/lost-found.report-lost'
 import { Route as LostFoundReportFoundRouteImport } from './routes/lost-found.report-found'
+import { Route as EventsIndexRouteImport } from './routes/events.index'
+import { Route as EventsCreateRouteImport } from './routes/events.create'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -86,6 +88,16 @@ const LostFoundReportFoundRoute = LostFoundReportFoundRouteImport.update({
   path: '/lost-found/report-found',
   getParentRoute: () => rootRouteImport,
 })
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => rootRouteImport,
+})
+const EventsCreateRoute = EventsCreateRouteImport.update({
+  id: '/events/create',
+  path: '/events/create',
+  getParentRoute: () => rootRouteImport,
+})
 
 const rootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -101,5 +113,7 @@ const rootRouteChildren = {
   MarketplaceSellRoute: MarketplaceSellRoute,
   LostFoundIndexRoute: LostFoundIndexRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,
+  EventsIndexRoute: EventsIndexRoute,
+  EventsCreateRoute: EventsCreateRoute,
 }
 export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)

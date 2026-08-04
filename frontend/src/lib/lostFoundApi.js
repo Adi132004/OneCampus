@@ -64,10 +64,14 @@ export async function createLostFoundItemWithFile(payload, file) {
   fd.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
   if (file) fd.append("file", file, file.name);
 
+  // Snapshot the token once so both the header value and the conditional check
+  // are consistent even if the token storage is updated between calls.
+  const token = getAccessToken();
+
   const response = await fetch(`${API_BASE_URL}/api/lost-found/upload`, {
     method: "POST",
     headers: {
-      ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       // DO NOT set Content-Type; browser will set the multipart boundary
     },
     body: fd,
@@ -80,6 +84,23 @@ export async function updateLostFoundItem(itemId, payload) {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(payload),
+  });
+  return handleResponse(response);
+}
+
+export async function updateLostFoundItemWithFile(itemId, payload, file) {
+  const fd = new FormData();
+  fd.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+  if (file) fd.append("file", file, file.name);
+
+  const token = getAccessToken();
+
+  const response = await fetch(`${API_BASE_URL}/api/lost-found/${itemId}/upload`, {
+    method: "PUT",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: fd,
   });
   return handleResponse(response);
 }
@@ -104,4 +125,13 @@ export async function deleteLostFoundItem(itemId) {
       throw new Error(text || "Unable to delete item");
     }
   }
+}
+
+export async function repostLostFoundItem(itemId, targetStatus) {
+  const query = targetStatus ? `?status=${encodeURIComponent(targetStatus)}` : "";
+  const response = await fetch(`${API_BASE_URL}/api/lost-found/${itemId}/repost${query}`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse(response);
 }
