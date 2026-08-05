@@ -14,6 +14,8 @@ export function LostFoundPage() {
   const [q, setQ] = useState("");
   const [items, setItems] = useState([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authResolved, setAuthResolved] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [draft, setDraft] = useState({ name: "", description: "", location: "", date: "", contact: "", category: "" });
   const [editFile, setEditFile] = useState(null);
@@ -25,7 +27,20 @@ export function LostFoundPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const [repostingId, setRepostingId] = useState(null);
 
-  useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
+  useEffect(() => {
+    const stored = getCurrentAuthUser();
+    setIsSignedIn(Boolean(stored));
+    setCurrentUser(stored);
+    setAuthResolved(true);
+
+    const unsubscribe = subscribeToAuth((user) => {
+      setIsSignedIn(Boolean(user));
+      setCurrentUser(user);
+      setAuthResolved(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     fetchLostFoundItems()
@@ -33,15 +48,17 @@ export function LostFoundPage() {
       .catch((err) => {
         const msg = (err && err.message) || "";
         if (msg === "UNAUTHORIZED" || msg.toLowerCase().includes("401") || msg.toLowerCase().includes("unauthorized")) {
-          // redirect to login preserving next
-          window.location.href = `/login?next=${encodeURIComponent("/lost-found")}`;
+          if (isSignedIn) {
+            // only force login if the user appears signed in but the token is invalid
+            window.location.href = `/login?next=${encodeURIComponent("/lost-found")}`;
+            return;
+          }
+          setItems([]);
           return;
         }
         setItems([]);
       });
-  }, []);
-
-  const currentUser = getCurrentAuthUser();
+  }, [isSignedIn]);
 
   /**
    * Returns true if the logged-in user owns this item.
@@ -235,7 +252,7 @@ export function LostFoundPage() {
     setChatLoading(true);
     setChattingWith(item.id);
     try {
-      const token = getCurrentAuthUser()?.accessToken || localStorage.getItem("onecampus-access-token");
+      const token = currentUser?.accessToken || localStorage.getItem("onecampus-access-token");
       const response = await fetch(`${API_BASE_URL}/api/chat/conversations`, {
         method: "POST",
         headers: {
@@ -275,13 +292,13 @@ export function LostFoundPage() {
         </div>
         <div className="flex gap-3">
           <Link
-            to={isSignedIn ? "/lost-found/report-lost" : `/login?next=${encodeURIComponent("/lost-found/report-lost")}`}
+            to="/lost-found/report-lost"
             className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
           >
             <Plus className="h-4 w-4" /> Report Lost
           </Link>
           <Link
-            to={isSignedIn ? "/lost-found/report-found" : `/login?next=${encodeURIComponent("/lost-found/report-found")}`}
+            to="/lost-found/report-found"
             className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
             style={{
               boxShadow: "0 6px 16px rgba(232,89,12,0.25)",

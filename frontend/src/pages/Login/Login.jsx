@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
-import { getCurrentAuthUser, loginWithEmailPassword, subscribeToAuth } from "@/lib/firebase";
+import { getAccessToken, getCurrentAuthUser, loginWithEmailPassword, logoutUser, refreshCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");

@@ -1,21 +1,33 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ReportForm } from "@/components/ReportForm";
 import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
+
 export function ReportLostPage() {
   const nav = useNavigate();
-  const [user, setUser] = useState(null);
-  
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
+
   useEffect(() => {
-    const unsub = subscribeToAuth(setUser);
-    return () => unsub();
+    const stored = getCurrentAuthUser();
+    setIsSignedIn(Boolean(stored));
+    setAuthResolved(true);
+    const unsubscribe = subscribeToAuth((user) => {
+      setIsSignedIn(Boolean(user));
+      setAuthResolved(true);
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!getCurrentAuthUser()) {
-      window.location.href = `/login?next=${encodeURIComponent("/lost-found/report-lost")}`;
+    if (authResolved && !isSignedIn) {
+      window.location.replace(`/login?next=${encodeURIComponent("/lost-found/report-lost")}`);
     }
-  }, []);
+  }, [authResolved, isSignedIn]);
+
+  if (!isSignedIn) {
+    return null;
+  }
 
   return (
     <ReportForm

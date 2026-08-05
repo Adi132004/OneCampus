@@ -211,6 +211,7 @@ function CategoryDropdown({ value, onChange, hasError }) {
 export function ReportForm({ kind, onDone }) {
   const nav = useNavigate();
   const fileInputRef = useRef(null);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -218,6 +219,12 @@ export function ReportForm({ kind, onDone }) {
     date: "",
     contact: "",
   });
+  useEffect(() => {
+    const stored = getCurrentAuthUser();
+    setIsSignedIn(Boolean(stored));
+    const unsubscribe = subscribeToAuth((user) => setIsSignedIn(Boolean(user)));
+    return () => unsubscribe();
+  }, []);
   const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [file, setFile] = useState(null);
@@ -226,15 +233,6 @@ export function ReportForm({ kind, onDone }) {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false);
-
-  useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
-
-  useEffect(() => {
-    if (!isSignedIn) {
-      nav({ to: "/login" });
-    }
-  }, [isSignedIn, nav]);
 
   useEffect(() => {
     if (!file) {
