@@ -1,4 +1,4 @@
-import { API_BASE_URL, getAccessToken } from "@/lib/firebase";
+import { API_BASE_URL, getAccessToken, logoutUser } from "@/lib/firebase";
 
 function authHeaders() {
   const token = getAccessToken();
@@ -10,6 +10,9 @@ function authHeaders() {
 
 async function handleResponse(response) {
   if (response.status === 401) {
+    try {
+      logoutUser();
+    } catch {}
     throw new Error("UNAUTHORIZED");
   }
   if (response.status === 403) {

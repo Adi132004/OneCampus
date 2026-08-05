@@ -17,7 +17,7 @@ function getStoredAuthUser() {
 }
 
 function notifyAuthSubscribers() {
-  const user = getStoredAuthUser();
+  const user = getCurrentAuthUser();
   authSubscribers.forEach((callback) => {
     try {
       callback(user);
@@ -67,7 +67,20 @@ export function getAccessToken() {
 }
 
 export function getCurrentAuthUser() {
-  return getStoredAuthUser();
+  const stored = getStoredAuthUser();
+  // Only consider a user "current" if an access token exists.
+  // This ensures a single source of truth: presence of an access token
+  // indicates an authenticated session. A cached profile without a token
+  // is treated as logged out.
+  try {
+    const token = getAccessToken();
+    if (!stored || !token) return null;
+    // Attach the current access token to the returned profile for convenience
+    // (some callers expect `accessToken` on the user object).
+    return { ...stored, accessToken: token };
+  } catch {
+    return null;
+  }
 }
 
 export function isSignedIn() {
@@ -76,7 +89,9 @@ export function isSignedIn() {
 
 export function subscribeToAuth(callback) {
   authSubscribers.add(callback);
-  callback(getStoredAuthUser());
+  // Use the unified getter so subscribers receive a consistent view
+  // (null when there is no valid token).
+  callback(getCurrentAuthUser());
   return () => authSubscribers.delete(callback);
 }
 

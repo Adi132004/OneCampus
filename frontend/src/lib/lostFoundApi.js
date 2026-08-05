@@ -1,4 +1,4 @@
-import { API_BASE_URL, getAccessToken } from "@/lib/firebase";
+import { API_BASE_URL, getAccessToken, logoutUser } from "@/lib/firebase";
 
 function authHeaders() {
   const token = getAccessToken();
@@ -10,6 +10,15 @@ function authHeaders() {
 
 async function handleResponse(response) {
   if (response.status === 401) {
+    // Clear any stale auth state so UI doesn't treat a cached profile
+    // as an active session. This prevents redirect loops where a
+    // protected page redirects to login and the login page immediately
+    // redirects back because a stale profile remained in storage.
+    try {
+      logoutUser();
+    } catch {
+      // ignore
+    }
     throw new Error("UNAUTHORIZED");
   }
   if (response.status === 403) {
@@ -111,6 +120,9 @@ export async function deleteLostFoundItem(itemId) {
     headers: authHeaders(),
   });
   if (response.status === 401) {
+    try {
+      logoutUser();
+    } catch {}
     throw new Error("UNAUTHORIZED");
   }
   if (response.status === 403) {
