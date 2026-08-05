@@ -27,6 +27,13 @@ export default defineConfig({
       port: 3000,      // Frontend will run on port 3000
       strictPort: true // Fail if port 3000 is unavailable
     },
+    define: {
+      // Define environment variables for the frontend
+      "process.env.API_BASE_URL": JSON.stringify(
+        process.env.API_BASE_URL || "https://onecampus-8qm6.onrender.com/api"
+      ),
+      global: "globalThis",
+    },
   },
 
   tanstackStart: {
