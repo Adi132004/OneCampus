@@ -13,7 +13,7 @@ export function LostFoundPage() {
   const [tab, setTab] = useState("All");
   const [q, setQ] = useState("");
   const [items, setItems] = useState([]);
-  const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [draft, setDraft] = useState({ name: "", description: "", location: "", date: "", contact: "", category: "" });
   const [editFile, setEditFile] = useState(null);

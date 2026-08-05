@@ -22,8 +22,8 @@ import { Route as MarketplaceSellRouteImport } from './../routes/marketplace.sel
 import { Route as MarketplaceIdRouteImport } from './../routes/marketplace.$id'
 import { Route as LostFoundReportLostRouteImport } from './../routes/lost-found.report-lost'
 import { Route as LostFoundReportFoundRouteImport } from './../routes/lost-found.report-found'
-import { Route as MarketplaceEditIdRouteImport } from './../routes/marketplace.edit.$id'
 import { Route as EventsCreateRouteImport } from './../routes/events.create'
+import { Route as MarketplaceEditIdRouteImport } from './../routes/marketplace.edit.$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -90,12 +90,14 @@ const LostFoundReportFoundRoute = LostFoundReportFoundRouteImport.update({
   path: '/lost-found/report-found',
   getParentRoute: () => rootRouteImport,
 })
-const MarketplaceEditIdRoute = MarketplaceEditIdRouteImport.update({
-  id: '/marketplace/edit/$id',
-  path: '/marketplace/edit/$id',
 const EventsCreateRoute = EventsCreateRouteImport.update({
   id: '/events/create',
   path: '/events/create',
+  getParentRoute: () => rootRouteImport,
+})
+const MarketplaceEditIdRoute = MarketplaceEditIdRouteImport.update({
+  id: '/marketplace/edit/$id',
+  path: '/marketplace/edit/$id',
   getParentRoute: () => rootRouteImport,
 })
 

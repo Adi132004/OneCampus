@@ -18,7 +18,7 @@ import "./Messages.css";
  * @param {(open: boolean) => void} props.onOpenChange
  */
 export default function MessageDrawer({ isOpen, onOpenChange }) {
-  const [currentUser, setCurrentUser] = useState(() => getCurrentAuthUser());
+  const [currentUser, setCurrentUser] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());

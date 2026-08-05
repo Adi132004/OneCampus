@@ -226,7 +226,7 @@ export function ReportForm({ kind, onDone }) {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
 

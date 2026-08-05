@@ -15,7 +15,7 @@ import ChatWindow from "@/components/Messages/ChatWindow";
 import "@/components/Messages/Messages.css";
 
 export function AIChatPage() {
-  const [currentUser, setCurrentUser] = useState(() => getCurrentAuthUser());
+  const [currentUser, setCurrentUser] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());

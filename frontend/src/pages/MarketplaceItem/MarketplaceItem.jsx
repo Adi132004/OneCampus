@@ -11,13 +11,19 @@ import {
   deleteMarketplaceItem,
 } from "@/services/marketplace";
 
-import { getCurrentAuthUser } from "@/lib/firebase";
+import { useState, useEffect } from "react";
+import { getCurrentAuthUser, subscribeToAuth } from "@/lib/firebase";
 
 export function MarketplaceItemPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const currentUser = getCurrentAuthUser();
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const unsub = subscribeToAuth(setCurrentUser);
+    return () => unsub();
+  }, []);
 
   const {
     data: p,

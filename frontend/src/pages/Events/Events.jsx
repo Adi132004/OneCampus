@@ -11,7 +11,7 @@ export function EventsPage() {
   const [q, setQ] = useState("");
   const [events, setEvents] = useState([]);
   const [lostFoundItems, setLostFoundItems] = useState([]);
-  const [isSignedIn, setIsSignedIn] = useState(() => Boolean(getCurrentAuthUser()));
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => subscribeToAuth((user) => setIsSignedIn(Boolean(user))), []);
 

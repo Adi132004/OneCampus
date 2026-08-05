@@ -29,7 +29,22 @@ export function connectSocket({ onConnected, onError } = {}) {
 
   const token = getAccessToken();
 
+  // Determine WebSocket URL from environment or by converting API_BASE_URL
+  let wsUrl = import.meta.env.VITE_WS_URL;
+  if (!wsUrl) {
+    if (API_BASE_URL.startsWith("http")) {
+      wsUrl = API_BASE_URL.replace(/^http/, "ws") + "/ws";
+    } else {
+      // Fallback relative or dynamic
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      wsUrl = `${protocol}//${window.location.host}${API_BASE_URL}/ws`;
+    }
+  }
+
   stompClient = new Client({
+    // Use standard WebSocket if we have a ws/wss URL
+    brokerURL: wsUrl,
+    // Fallback to SockJS if brokerURL is not supported or fails
     webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
 
     connectHeaders: {
