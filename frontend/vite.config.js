@@ -44,5 +44,6 @@ export default defineConfig({
     "process.env.API_BASE_URL": JSON.stringify(
       process.env.API_BASE_URL || "https://onecampus-8qm6.onrender.com/api"
     ),
+    global: "globalThis",
   },
 });
