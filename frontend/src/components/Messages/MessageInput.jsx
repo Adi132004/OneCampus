@@ -1,23 +1,100 @@
-import { Send } from "lucide-react";
-import { useState } from "react";
+import { Send, Smile } from "lucide-react";
+import { useRef, useState } from "react";
 
-export default function MessageInput() {
-  const [message, setMessage] = useState("");
+const EMOJI_LIST = ["😊", "👍", "❤️", "😂", "🙏", "🔥", "✅", "🎉", "💯", "😅"];
+
+/**
+ * @param {object} props
+ * @param {(text: string) => void} props.onSend
+ * @param {boolean} [props.disabled]
+ */
+export default function MessageInput({ onSend, disabled = false }) {
+  const [text, setText] = useState("");
+  const [showEmoji, setShowEmoji] = useState(false);
+  const textareaRef = useRef(null);
+
+  function handleSend() {
+    const trimmed = text.trim();
+    if (!trimmed || disabled) return;
+    onSend(trimmed);
+    setText("");
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }
+
+  function handleInput(e) {
+    setText(e.target.value);
+    // Auto-resize
+    const ta = textareaRef.current;
+    if (ta) {
+      ta.style.height = "auto";
+      ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
+    }
+  }
+
+  function insertEmoji(emoji) {
+    setText((prev) => prev + emoji);
+    setShowEmoji(false);
+    textareaRef.current?.focus();
+  }
 
   return (
-    <div className="flex items-center gap-3 border-t bg-white p-4">
-      <input
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="Type a message..."
-        className="flex-1 rounded-full border px-5 py-3 outline-none focus:ring-2 focus:ring-orange-400"
-      />
+    <div className="msg-input-bar">
+      {showEmoji && (
+        <div className="emoji-picker">
+          {EMOJI_LIST.map((e) => (
+            <button
+              key={e}
+              onClick={() => insertEmoji(e)}
+              className="emoji-btn"
+              type="button"
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <button
-        className="rounded-full bg-orange-500 p-3 text-white transition hover:bg-orange-600"
-      >
-        <Send size={18} />
-      </button>
+      <div className="msg-input-row">
+        <button
+          type="button"
+          onClick={() => setShowEmoji((v) => !v)}
+          className="emoji-toggle"
+          aria-label="Emoji picker"
+        >
+          <Smile size={20} />
+        </button>
+
+        <textarea
+          ref={textareaRef}
+          value={text}
+          onChange={handleInput}
+          onKeyDown={handleKeyDown}
+          placeholder="Type a message… (Enter to send)"
+          rows={1}
+          disabled={disabled}
+          className="msg-textarea"
+        />
+
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={!text.trim() || disabled}
+          className="msg-send-btn"
+          aria-label="Send message"
+        >
+          <Send size={18} />
+        </button>
+      </div>
     </div>
   );
 }

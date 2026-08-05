@@ -13,7 +13,7 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "lost_report_id", nullable = false)
+    @Column(name = "lost_report_id", nullable = true)
     private UUID lostReportId;
 
     @Column(name = "user1_id", nullable = false)
@@ -28,8 +28,17 @@ public class Conversation {
     protected Conversation() {
     }
 
+    /** LostFound-linked conversation (backward-compatible). */
     public Conversation(UUID lostReportId, UUID user1Id, UUID user2Id) {
         this.lostReportId = lostReportId;
+        this.user1Id = user1Id;
+        this.user2Id = user2Id;
+        this.createdAt = Instant.now();
+    }
+
+    /** Direct-message conversation (no lost report). */
+    public Conversation(UUID user1Id, UUID user2Id) {
+        this.lostReportId = null;
         this.user1Id = user1Id;
         this.user2Id = user2Id;
         this.createdAt = Instant.now();

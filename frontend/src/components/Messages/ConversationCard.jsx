@@ -1,45 +1,49 @@
-export default function ConversationCard({
-    conversation,
-    selected,
-    onClick,
-  }) {
-    return (
-      <button
-        onClick={onClick}
-        className={`w-full flex items-center gap-3 p-4 border-b transition
-  
-        ${
-          selected
-            ? "bg-orange-50 border-l-4 border-l-orange-500"
-            : "hover:bg-gray-50"
-        }`}
-      >
-        <div className="h-12 w-12 rounded-full bg-orange-500 text-white flex items-center justify-center font-semibold">
-          {conversation.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")}
+import { formatDistanceToNow } from "date-fns";
+
+/**
+ * @param {object} props
+ * @param {object} props.conversation — ConversationDto
+ * @param {boolean} props.selected
+ * @param {boolean} props.isOnline
+ * @param {() => void} props.onClick
+ */
+export default function ConversationCard({ conversation, selected, isOnline, onClick }) {
+  const initials = (conversation.otherUserName || "?")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const timeAgo = conversation.lastMessageAt
+    ? formatDistanceToNow(new Date(conversation.lastMessageAt), { addSuffix: true })
+    : null;
+
+  return (
+    <button
+      onClick={onClick}
+      className={`conv-card ${selected ? "conv-card-selected" : ""}`}
+    >
+      <div className="conv-avatar-wrap">
+        <div className="conv-avatar">{initials}</div>
+        {isOnline && <span className="online-dot" aria-label="Online" />}
+      </div>
+
+      <div className="conv-info">
+        <div className="conv-top-row">
+          <span className="conv-name">{conversation.otherUserName}</span>
+          {timeAgo && <span className="conv-time">{timeAgo}</span>}
         </div>
-  
-        <div className="flex-1 text-left">
-          <h3 className="font-semibold">
-            {conversation.name}
-          </h3>
-  
-          <p className="text-xs text-gray-500">
-            {conversation.context}
-          </p>
-  
-          <p className="text-sm text-gray-700 truncate">
-            {conversation.item}
-          </p>
+
+        <div className="conv-bottom-row">
+          <span className="conv-last-msg">
+            {conversation.lastMessage || "No messages yet"}
+          </span>
+          {conversation.unreadCount > 0 && (
+            <span className="conv-unread-badge">{conversation.unreadCount}</span>
+          )}
         </div>
-  
-        {conversation.unread > 0 && (
-          <div className="h-6 w-6 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center">
-            {conversation.unread}
-          </div>
-        )}
-      </button>
-    );
-  }
+      </div>
+    </button>
+  );
+}

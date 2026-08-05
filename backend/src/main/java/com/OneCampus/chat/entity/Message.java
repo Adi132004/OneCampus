@@ -32,6 +32,9 @@ public class Message {
     @Column(name = "is_read", nullable = false)
     private boolean read;
 
+    @Column(name = "delivered", nullable = false, columnDefinition = "boolean not null default false")
+    private boolean delivered;
+
     protected Message() {
     }
 
@@ -42,6 +45,7 @@ public class Message {
         this.message = message;
         this.timestamp = Instant.now();
         this.read = false;
+        this.delivered = false;
     }
 
     public UUID getId() {
@@ -74,5 +78,13 @@ public class Message {
 
     public void setRead(boolean read) {
         this.read = read;
+    }
+
+    public boolean isDelivered() {
+        return delivered;
+    }
+
+    public void setDelivered(boolean delivered) {
+        this.delivered = delivered;
     }
 }

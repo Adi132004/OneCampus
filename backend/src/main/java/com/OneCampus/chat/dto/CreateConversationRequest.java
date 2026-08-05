@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record CreateConversationRequest(
-        @NotNull UUID lostReportId,
+        UUID lostReportId,          // nullable for direct messaging
         @NotNull UUID otherUserId
 ) {
 }

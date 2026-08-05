@@ -10,6 +10,7 @@ public record MessageDto(
         UUID receiverId,
         String message,
         Instant timestamp,
-        boolean read
+        boolean read,
+        boolean delivered
 ) {
 }

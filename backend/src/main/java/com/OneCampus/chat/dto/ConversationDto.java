@@ -8,10 +8,12 @@ public record ConversationDto(
         UUID lostReportId,
         UUID user1Id,
         UUID user2Id,
+        UUID otherUserId,
         Instant createdAt,
         String otherUserName,
         String otherUserEmail,
         String lastMessage,
-        Instant lastMessageAt
+        Instant lastMessageAt,
+        long unreadCount
 ) {
 }

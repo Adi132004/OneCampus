@@ -17,4 +17,13 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
     Optional<Conversation> findByLostReportIdAndUser1IdAndUser2Id(UUID lostReportId, UUID user1Id, UUID user2Id);
 
     Optional<Conversation> findByLostReportIdAndUser2IdAndUser1Id(UUID lostReportId, UUID user2Id, UUID user1Id);
+
+    /** Find a direct (no lostReport) conversation between two users (either direction). */
+    @Query("""
+            select c from Conversation c
+            where c.lostReportId is null
+              and ((c.user1Id = :a and c.user2Id = :b)
+                or (c.user1Id = :b and c.user2Id = :a))
+            """)
+    Optional<Conversation> findDirectConversation(@Param("a") UUID userA, @Param("b") UUID userB);
 }
